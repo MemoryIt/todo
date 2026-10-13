@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import beaver from './assets/beaver.svg'
 import type { ApiResponse } from 'shared'
 import './App.css'
 
@@ -20,11 +19,6 @@ function App() {
 
   return (
     <>
-      <div>
-        <a href="https://github.com/stevedylandev/bhvr" target="_blank">
-          <img src={beaver} className="logo" alt="beaver logo" />
-        </a>
-      </div>
       <h1>bhvr</h1>
       <h2>Bun + Hono + Vite + React</h2>
       <p>A typesafe fullstack monorepo</p>
