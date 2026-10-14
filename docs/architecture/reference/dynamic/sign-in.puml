@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Dynamic>
+
+title Dynamic diagram for Internet Banking System - Sign In
+
+Person(customer, "Personal Banking Customer", "A customer of the bank.")
+
+Container(spa, "Single-Page App", "JavaScript, Angular", "Provides all Internet banking functionality via the web browser.")
+Container(api, "API Application", "Java, Spring MVC", "Provides Internet banking functionality via API.")
+ContainerDb(db, "Database", "Relational Database Schema", "Stores user registration information, hashed authentication credentials, access logs, etc.")
+
+Rel(customer, spa, "Signs in using", "HTTPS")
+Rel(spa, api, "Calls the sign-in endpoint", "JSON/HTTPS")
+Rel(api, db, "Looks up credentials", "JDBC")
+Rel(api, spa, "Returns authentication result", "JSON/HTTPS")
+
+@enduml

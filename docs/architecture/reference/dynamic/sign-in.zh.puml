@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Dynamic>
+
+title 网上银行系统 - 登录动态图
+
+Person(customer, "个人银行客户", "银行客户。")
+
+Container(spa, "单页应用", "JavaScript, Angular", "通过网页浏览器提供全部网上银行功能。")
+Container(api, "API 应用程序", "Java, Spring MVC", "通过 API 提供网上银行功能。")
+ContainerDb(db, "数据库", "关系型数据库模式", "存储用户注册信息、哈希认证凭据、访问日志等。")
+
+Rel(customer, spa, "使用其登录", "HTTPS")
+Rel(spa, api, "调用登录接口", "JSON/HTTPS")
+Rel(api, db, "查询凭据", "JDBC")
+Rel(api, spa, "返回认证结果", "JSON/HTTPS")
+
+@enduml
