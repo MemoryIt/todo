@@ -1,0 +1,35 @@
+@startuml
+!include <C4/C4_Container>
+
+LAYOUT_TOP_DOWN()
+SHOW_LEGEND()
+
+title 网上银行系统的容器图
+
+Person(customer, "个人银行客户", "拥有个人银行账户的银行客户。")
+
+System_Boundary(internetBanking, "网上银行系统") {
+    Container(web_app, "Web 应用程序", "Java, Spring MVC", "提供静态内容以及网上银行单页应用。")
+    Container(spa, "单页应用", "JavaScript, Angular", "通过网页浏览器为客户提供全部网上银行功能。")
+    Container(mobile_app, "移动应用", "C#, Xamarin", "通过移动设备为客户提供部分网上银行功能。")
+    Container(api_app, "API 应用程序", "Java, Docker Container", "通过 API 提供网上银行功能。")
+    ContainerDb(database, "数据库", "SQL Database", "存储用户注册信息、哈希认证凭据、访问日志等。")
+}
+
+System_Ext(email_system, "电子邮件系统", "内部的 Microsoft Exchange 系统。")
+System_Ext(mainframe, "主机银行系统", "存储客户、账户、交易等所有核心银行信息。")
+
+Rel(customer, web_app, "使用", "HTTPS")
+Rel(customer, spa, "使用", "HTTPS")
+Rel(customer, mobile_app, "使用")
+
+Rel(web_app, spa, "交付")
+Rel(spa, api_app, "使用", "异步, JSON/HTTPS")
+Rel(mobile_app, api_app, "使用", "异步, JSON/HTTPS")
+Rel(api_app, database, "读取和写入", "同步, JDBC")
+
+Rel(api_app, email_system, "使用其发送电子邮件", "同步, SMTP")
+Rel(email_system, customer, "向其发送电子邮件")
+Rel(api_app, mainframe, "使用", "同步/异步, XML/HTTPS")
+
+@enduml
