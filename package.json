@@ -21,6 +21,8 @@
 		"lint": "turbo lint",
 		"type-check": "turbo type-check",
 		"test": "turbo test",
+		"diagrams:check": "bash scripts/diagrams.sh check",
+		"diagrams:render": "bash scripts/diagrams.sh",
 		"postinstall": "turbo build --filter=shared --filter=server"
 	},
 	"keywords": [
