@@ -1,0 +1,42 @@
+@startuml
+title Code diagram for Internet Banking System - Security Component
+
+skinparam class {
+  BackgroundColor<<interface>> LightBlue
+  BorderColor Black
+}
+
+interface AuthenticationService {
+  + authenticate(username: String, password: String): User
+  + changePassword(userId: String, newPassword: String): void
+}
+
+class SecurityComponent implements AuthenticationService {
+  - userRepository: UserRepository
+  - passwordEncoder: PasswordEncoder
+  + authenticate(username: String, password: String): User
+  + changePassword(userId: String, newPassword: String): void
+}
+
+class UserRepository {
+  + findByUsername(username: String): User
+  + save(user: User): void
+}
+
+class PasswordEncoder {
+  + encode(rawPassword: String): String
+  + matches(rawPassword: String, encodedPassword: String): boolean
+}
+
+class User {
+  - id: String
+  - username: String
+  - passwordHash: String
+  - roles: Set<String>
+}
+
+SecurityComponent --> UserRepository : uses
+SecurityComponent --> PasswordEncoder : uses
+UserRepository --> User : persists
+
+@enduml

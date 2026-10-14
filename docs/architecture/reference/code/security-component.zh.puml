@@ -1,0 +1,42 @@
+@startuml
+title 网上银行系统 - 安全组件的代码图
+
+skinparam class {
+  BackgroundColor<<interface>> LightBlue
+  BorderColor Black
+}
+
+interface 认证服务 {
+  + 认证(用户名: String, 密码: String): 用户
+  + 修改密码(用户ID: String, 新密码: String): void
+}
+
+class 安全组件 implements 认证服务 {
+  - 用户仓库: 用户仓库
+  - 密码编码器: 密码编码器
+  + 认证(用户名: String, 密码: String): 用户
+  + 修改密码(用户ID: String, 新密码: String): void
+}
+
+class 用户仓库 {
+  + 根据用户名查找(用户名: String): 用户
+  + 保存(用户: 用户): void
+}
+
+class 密码编码器 {
+  + 编码(原始密码: String): String
+  + 匹配(原始密码: String, 编码后密码: String): boolean
+}
+
+class 用户 {
+  - 标识: String
+  - 用户名: String
+  - 密码哈希: String
+  - 角色: Set<String>
+}
+
+安全组件 --> 用户仓库 : 使用
+安全组件 --> 密码编码器 : 使用
+用户仓库 --> 用户 : 持久化
+
+@enduml
