@@ -42,3 +42,7 @@ bun.lockb
 
 # Turbo
 .turbo
+
+# design docs: locally generated PlantUML renders (never commit)
+docs/architecture/**/*.svg
+docs/architecture/**/*.png
