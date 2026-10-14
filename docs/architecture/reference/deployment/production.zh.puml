@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Deployment>
+
+title 网上银行系统 - 生产环境部署图
+
+Deployment_Node(lb, "负载均衡器", "nginx", "路由传入的 HTTPS 流量") {
+}
+
+Deployment_Node(dc, "数据中心", "London") {
+  Deployment_Node(web, "Web 服务器", "Apache Tomcat") {
+    Container(webapp, "Web 应用程序", "Java, Spring MVC", "提供静态内容与单页应用。")
+  }
+  Deployment_Node(app, "应用服务器", "Apache Tomcat") {
+    Container(api, "API 应用程序", "Java, Spring MVC", "通过 API 提供网上银行功能。")
+  }
+  Deployment_Node(dbserver, "数据库服务器", "MySQL") {
+    ContainerDb(db, "数据库", "MySQL", "存储用户注册、凭据与访问日志。")
+  }
+}
+
+Rel(lb, webapp, "将请求路由到", "HTTPS")
+Rel(webapp, api, "调用", "JSON/HTTPS")
+Rel(api, db, "读取和写入", "JDBC")
+
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Deployment>
+
+title Deployment diagram for Internet Banking System - Production
+
+Deployment_Node(lb, "Load Balancer", "nginx", "Routes incoming HTTPS traffic") {
+}
+
+Deployment_Node(dc, "Data Center", "London") {
+  Deployment_Node(web, "Web Server", "Apache Tomcat") {
+    Container(webapp, "Web Application", "Java, Spring MVC", "Delivers static content and the single-page app.")
+  }
+  Deployment_Node(app, "Application Server", "Apache Tomcat") {
+    Container(api, "API Application", "Java, Spring MVC", "Provides Internet banking functionality via its API.")
+  }
+  Deployment_Node(dbserver, "Database Server", "MySQL") {
+    ContainerDb(db, "Database", "MySQL", "Stores user registration, credentials and access logs.")
+  }
+}
+
+Rel(lb, webapp, "Routes requests to", "HTTPS")
+Rel(webapp, api, "Calls", "JSON/HTTPS")
+Rel(api, db, "Reads from and writes to", "JDBC")
+
+@enduml
