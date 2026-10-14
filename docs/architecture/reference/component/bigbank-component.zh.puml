@@ -1,0 +1,30 @@
+@startuml
+!include <C4/C4_Component>
+
+SHOW_LEGEND()
+
+title 网上银行系统 - API 应用程序的组件图
+
+Container(spa, "单页应用", "JavaScript, Angular", "通过网页浏览器为客户提供全部网上银行功能。")
+Container(ma, "移动应用", "C#, Xamarin", "通过移动设备为客户提供部分网上银行功能。")
+ContainerDb(db, "数据库", "关系型数据库模式", "存储用户注册信息、哈希认证凭据、访问日志等。")
+System_Ext(mbs, "主机银行系统", "存储客户、账户、交易等所有核心银行信息。")
+
+Container_Boundary(api, "API 应用程序") {
+    Component(sign, "登录控制器", "MVC Rest Controller", "允许用户登录网上银行系统。")
+    Component(accounts, "账户概览控制器", "MVC Rest Controller", "为客户提供其银行账户的概览信息。")
+    Component(security, "安全组件", "Spring Bean", "提供与登录、修改密码等相关的功能。")
+    Component(mbsfacade, "主机银行系统外观", "Spring Bean", "作为主机银行系统的外观（Facade）。")
+
+    Rel(sign, security, "使用")
+    Rel(accounts, mbsfacade, "使用")
+    Rel(security, db, "读取和写入", "JDBC")
+    Rel(mbsfacade, mbs, "使用", "XML/HTTPS")
+}
+
+Rel(spa, sign, "使用", "JSON/HTTPS")
+Rel(spa, accounts, "使用", "JSON/HTTPS")
+Rel(ma, sign, "使用", "JSON/HTTPS")
+Rel(ma, accounts, "使用", "JSON/HTTPS")
+
+@enduml
