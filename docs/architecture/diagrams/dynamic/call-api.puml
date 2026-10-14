@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Dynamic>
+
+title 动态图 — 点击 Call API
+
+Person(user, "用户")
+Container(client, "Web 客户端", "React + Vite")
+Container(server, "API 服务", "Bun + Hono")
+
+Rel(user, client, "点击 Call API 按钮")
+Rel(client, server, "请求", "GET /hello")
+Rel(server, client, "返回 200 与 ApiResponse", "application/json")
+Rel(client, user, "渲染 message / success", "setData 后重新渲染")
+
+@enduml
