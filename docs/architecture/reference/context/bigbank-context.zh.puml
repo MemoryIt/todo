@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+SHOW_LEGEND()
+
+title 网上银行系统的系统上下文图
+
+Person(customer, "个人银行客户", "拥有一个或多个个人银行账户的银行客户。")
+
+System(internetBankingSystem, "网上银行系统", "允许客户通过网络查看其银行账户信息并进行支付。")
+
+System_Ext(awsSes, "Amazon Web Services\n简单电子邮件服务", "基于云的电子邮件服务提供商。")
+System_Ext(coreBankingSystem, "核心银行系统", "处理核心银行功能，包括客户信息、银行账户管理、交易等。")
+
+Rel(customer, internetBankingSystem, "使用其查看账户余额并进行支付")
+Rel(internetBankingSystem, awsSes, "使用其向客户发送电子邮件")
+Rel(awsSes, customer, "向其发送电子邮件")
+Rel(internetBankingSystem, coreBankingSystem, "使用其获取银行账户信息并进行支付")
+
+@enduml

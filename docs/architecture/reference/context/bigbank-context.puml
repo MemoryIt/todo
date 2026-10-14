@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+title System Context diagram for Internet Banking System
+
+Person(customer, "Personal Banking Customer", "A customer of the bank with one or more personal bank accounts.")
+
+System(internetBankingSystem, "Internet Banking System", "Allows customers to view information about their bank accounts and make payments via the web.")
+
+System_Ext(awsSes, "Amazon Web Services\nSimple Email Service", "Cloud-based email service provider.")
+System_Ext(coreBankingSystem, "Core Banking System", "Handles core banking functions including customer information, bank account management, transactions, etc.")
+
+Rel(customer, internetBankingSystem, "Views account balances and makes payments using")
+Rel(internetBankingSystem, awsSes, "Sends e-mails to customers using")
+Rel(awsSes, customer, "Sends e-mails to")
+Rel(internetBankingSystem, coreBankingSystem, "Gets bank account information from and makes payments using")
+
+@enduml
