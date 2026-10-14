@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+
+title 系统上下文图 — bhvr 全栈应用
+
+Person(user, "用户", "通过浏览器访问该应用页面的人")
+
+System(app, "bhvr 全栈应用", "基于 bhvr 模板的全栈 TypeScript 应用；当前提供示例接口，前端点击按钮调用后端")
+
+Rel(user, app, "通过浏览器访问", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
