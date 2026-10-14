@@ -1,0 +1,24 @@
+@startuml
+title server — 代码结构（C4 L4）
+
+class "server/src/index.ts" as ServerIndex <<module>> {
+  +app: Hono
+  +app.use(cors())
+  +app.get('/')
+  +app.get('/hello')
+  +default: app
+}
+
+class "ApiResponse" as ApiResponse <<type>> {
+  +message: string
+  +success: true
+}
+
+ServerIndex ..> ApiResponse : import type
+
+note bottom of ServerIndex
+  GET /      -> 纯文本 Hello Hono!
+  GET /hello -> JSON ApiResponse (200)
+  由 Bun 作为入口运行；无自定义 class，以模块描述其能力。
+end note
+@enduml
