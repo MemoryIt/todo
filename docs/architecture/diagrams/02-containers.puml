@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Container>
+
+LAYOUT_TOP_DOWN()
+
+title 容器图 — bhvr 全栈应用
+
+Person(user, "用户", "通过浏览器访问该应用")
+
+System_Boundary(app, "bhvr 全栈应用") {
+  Container(client, "Web 客户端", "React 19 + Vite 6 + TypeScript", "渲染页面；点击 Call API 按钮调用后端接口")
+  Container(server, "API 服务", "Bun + Hono + TypeScript", "提供 REST API（GET /、GET /hello），启用 CORS")
+  Container(shared, "共享类型库", "TypeScript（workspace 包）", "被 client 与 server 引用的类型定义（如 ApiResponse）")
+}
+
+Rel(user, client, "使用", "HTTPS")
+Rel(client, server, "调用接口", "JSON / HTTP")
+Rel(client, shared, "引用类型", "workspace:*")
+Rel(server, shared, "引用类型", "workspace:*")
+
+SHOW_LEGEND()
+@enduml
