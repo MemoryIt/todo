@@ -1,0 +1,19 @@
+@startuml
+title Code - client (React App) @ a4993cc, v0.5.1
+
+skinparam classAttributeIconSize 0
+
+package "client" {
+  class "React App" as reactApp <<component>> {
+    -data : ApiResponse | undefined
+    +sendRequest() : Promise<void>
+  }
+}
+
+note bottom of reactApp
+  Reads SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000".
+  sendRequest fetches /hello and casts res.json() to ApiResponse
+  (compile-time cast, no runtime validation).
+end note
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Deployment>
+title Deployment - local development (Bun + Turbo) @ a4993cc, v0.5.1
+
+Person(dev, "Developer", "Runs turbo dev/build on the generated app")
+
+Deployment_Node(devMachine, "Developer machine", "bun 1.2.4 (packageManager), turbo") {
+  Container(devVite, "Vite dev server", "vite", "Default port 5173")
+  Container(devServer, "Bun server", "bun --watch run src/index.ts", "Default port 3000 unless PORT set")
+}
+
+Rel(dev, devVite, "Opens app in browser", "HTTP :5173")
+Rel(devVite, devServer, "Browser fetch /hello", "HTTP :3000")
+
+note bottom of devMachine
+  shared/dist is emitted by tsc --watch
+  (compile-time / build-time, non-runtime).
+  postinstall builds shared + server before dev.
+end note
+
+SHOW_LEGEND()
+@enduml

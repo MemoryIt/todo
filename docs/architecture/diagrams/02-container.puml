@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Container>
+title Container - bhvr app (generated from template) @ a4993cc, v0.5.1
+
+Person(user, "End user")
+System_Boundary(b, "bhvr app") {
+  Container(client, "client", "Vite 6 + React 19 SPA, TypeScript", "Dev server or static bundle; reads VITE_SERVER_URL, default http://localhost:3000")
+  Container(server, "server", "Hono 4 on Bun", "export default app; Bun auto-serve; CORS open; GET / and GET /hello")
+}
+
+Rel(user, client, "Loads SPA", "HTTP")
+Rel(client, server, "fetch GET /hello", "HTTP JSON")
+
+note right of client
+  Both client and server depend on shared types
+  (workspace:*, compile-time, non-runtime).
+  client also declares unused "server": "workspace:*"
+  (non-runtime fact).
+end note
+
+SHOW_LEGEND()
+@enduml

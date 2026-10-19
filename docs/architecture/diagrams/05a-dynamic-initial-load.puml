@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Dynamic>
+title Dynamic - client initial load (Vite + React) @ a4993cc, v0.5.1
+
+Person(user, "End user", "Opens the demo page")
+
+Container_Boundary(c, "client") {
+  Component(webEntry, "Client entry", "index.html + main.tsx")
+  Component(webSpa, "React SPA UI", "React function component")
+}
+
+Rel(user, webEntry, "GET index.html / loads modules")
+Rel(webEntry, webSpa, "createRoot renders")
+Rel(webSpa, user, "Displays UI (no API call yet)")
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Context>
+title System Landscape - bhvr template ecosystem @ a4993cc, v0.5.1
+
+Person(dev, "Developer", "Scaffolds projects, runs turbo, reads docs")
+System_Ext(template, "bhvr template repo", "stevedylandev/bhvr, source of scaffolding")
+System_Ext(cli, "create-bhvr CLI", "Separate repo stevedylandev/create-bhvr")
+System(app, "bhvr app", "Generated from template; Bun + Hono + Vite + React monorepo")
+System_Ext(docs, "bhvr.dev", "Docs and deployment guides")
+
+Rel(dev, cli, "Runs bun create bhvr@latest")
+Rel(cli, template, "Scaffolds from")
+note on link
+  待确认: may be bundled in CLI package
+  rather than a live read of the template repo
+end note
+Rel(cli, app, "Produces a copy of")
+Rel(dev, docs, "Reads guides", "dev-time / documentation")
+
+SHOW_LEGEND()
+@enduml

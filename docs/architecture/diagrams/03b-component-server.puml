@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Component>
+title Component - server (Hono on Bun) @ a4993cc, v0.5.1
+
+Container(client, "client", "React SPA")
+
+Container_Boundary(s, "server") {
+  Component(apiEntry, "apiEntry", "export default app", "Bun auto-serve of the Hono app; port 3000 unless PORT set")
+  Component(apiCors, "apiCors", "hono/cors", "Applied to all routes, default options (any origin)")
+  Component(apiRoutes, "apiRoutes", "Hono handlers", "GET / text; GET /hello JSON ApiResponse {message, success:true}")
+}
+
+Rel(client, apiEntry, "HTTP")
+Rel(apiEntry, apiCors, "Applies middleware")
+Rel(apiCors, apiRoutes, "next()")
+
+note bottom of s
+  apiRoutes uses shared ApiResponse type
+  (compile-time, non-runtime).
+  tsc build → dist is build-time only.
+end note
+
+SHOW_LEGEND()
+@enduml

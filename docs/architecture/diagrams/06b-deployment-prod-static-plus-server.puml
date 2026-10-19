@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Deployment>
+title Deployment - documented production options (illustrative) @ a4993cc, v0.5.1
+
+Person(user, "End user", "Opens the demo page, clicks Call API")
+
+Deployment_Node(staticHost, "Client static hosting", "Orbiter, GitHub Pages, Netlify, or Cloudflare Pages") {
+  Container(client, "client dist", "vite build output", "VITE_SERVER_URL baked in at build")
+}
+
+Deployment_Node(serverRuntime, "Server runtime", "Orbiter, Cloudflare Worker, or Railway (Bun / Node.js)") {
+  Container(server, "server", "Hono app", "Same default-exported app; adapter per target per bhvr.dev")
+}
+
+Rel(user, client, "HTTPS")
+Rel(client, server, "fetch /hello", "HTTPS, CORS *")
+
+note bottom
+  Illustrative grouping of options documented in README only.
+  No deploy configuration exists in the repository.
+  Not a concrete deployment topology.
+end note
+
+SHOW_LEGEND()
+@enduml

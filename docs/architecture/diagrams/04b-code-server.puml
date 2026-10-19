@@ -1,0 +1,20 @@
+@startuml
+title Code - server (Hono app) @ a4993cc, v0.5.1
+
+skinparam classAttributeIconSize 0
+
+package "server" {
+  class "Hono app" as honoApp <<default export>> {
+    +use(cors())
+    +get("/") : text "Hello Hono!"
+    +get("/hello") : json ApiResponse
+  }
+}
+
+note bottom of honoApp
+  /hello constructs a literal matching ApiResponse
+  (compile-time type check, non-runtime).
+  Bun serves the default export's fetch.
+end note
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+!include <C4/C4_Dynamic>
+title Dynamic - client calls server API (Hono) @ a4993cc, v0.5.1
+
+Person(user, "End user", "Clicks Call API")
+
+Container_Boundary(c, "client") {
+  Component(webSpa, "React SPA UI", "React function component")
+}
+Container_Boundary(s, "server") {
+  Component(apiEntry, "Hono app entry", "export default app")
+  Component(apiCors, "CORS middleware", "hono/cors")
+  Component(apiRoutes, "Routes", "Hono handlers")
+}
+
+Rel(user, webSpa, "Click Call API")
+Rel(webSpa, apiEntry, "fetch SERVER_URL/hello", "HTTP, cross-origin from Vite :5173")
+Rel(apiEntry, apiCors, "Applies middleware")
+Rel(apiCors, apiRoutes, "next(), adds Access-Control-Allow-Origin *")
+Rel(apiRoutes, webSpa, "200 JSON {message, success}")
+Rel(webSpa, user, "setData, render message + success")
+
+note right of webSpa
+  Response is cast to ApiResponse
+  (compile-time type, no runtime validation).
+end note
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Component>
+title Component - client (Vite + React) @ a4993cc, v0.5.1
+
+Person(user, "End user")
+Container(server, "server", "Hono", "GET /hello")
+
+Container_Boundary(c, "client") {
+  Component(webEntry, "webEntry", "index.html + main.tsx", "Vite runtime entry: loads #root, createRoot, StrictMode")
+  Component(webSpa, "webSpa", "React function component", "Renders UI, reads VITE_SERVER_URL, handles Call API click, manages useState<ApiResponse>")
+}
+
+Rel(user, webSpa, "Interacts with")
+Rel(webEntry, webSpa, "Bootstraps / renders")
+Rel(webSpa, server, "fetch SERVER_URL/hello", "HTTP")
+
+note right of webSpa
+  Uses shared ApiResponse type
+  (compile-time import type, non-runtime).
+  vite.config.ts is build-time only
+  (plugin-react, no proxy) — not a runtime component.
+end note
+
+SHOW_LEGEND()
+@enduml
