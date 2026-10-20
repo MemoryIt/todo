@@ -2,7 +2,8 @@ import { useState } from 'react'
 import type { ApiResponse } from 'shared'
 import './App.css'
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000"
+// Empty VITE_SERVER_URL means same-origin (single-container production build).
+const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3000"
 
 function App() {
   const [data, setData] = useState<ApiResponse | undefined>()
