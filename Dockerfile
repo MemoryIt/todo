@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG BUN_IMAGE=oven/bun:1.2.4-debian
+ARG BUN_IMAGE=oven/bun:1.4.2-debian
 
 # ---------- dependencies ----------
 FROM ${BUN_IMAGE} AS deps
