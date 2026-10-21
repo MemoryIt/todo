@@ -1,17 +1,37 @@
 @startuml
 !include <C4/C4_Dynamic>
-title Dynamic - client initial load (Vite + React) @ a4993cc, v0.5.1
+title Dynamic - Initial load (production)
 
-Person(user, "End user", "Opens the demo page")
+Person(user, "End user")
 
-Container_Boundary(c, "client") {
-  Component(webEntry, "Client entry", "index.html + main.tsx")
-  Component(webSpa, "React SPA UI", "React function component")
+Container_Boundary(c, "client (Todo SPA)") {
+  Component(app, "App", "App.tsx")
+  Component(model, "Model / API", "api.ts + useTodos.ts")
+  Component(ui, "UI components")
 }
 
-Rel(user, webEntry, "GET index.html / loads modules")
-Rel(webEntry, webSpa, "createRoot renders")
-Rel(webSpa, user, "Displays UI (no API call yet)")
+Container_Boundary(s, "server (API & static)") {
+  Component(api, "API routes")
+  Component(domain, "Domain")
+  Component(store, "In-memory store")
+}
+
+Rel(user, app, "Opens /", "HTTP")
+Rel(app, model, "useTodos loads")
+Rel(model, api, "GET /api/todo", "HTTP JSON")
+Rel(api, domain, "listTodos()")
+Rel(domain, store, "findAll()")
+Rel(store, domain, "TodoList")
+Rel(domain, api, "returns todos")
+Rel(api, model, "200 { todos }")
+Rel(model, app, "set state")
+Rel(app, ui, "renders list or empty")
+
+note bottom
+  Production: server serves index.html + hashed JS/CSS (SPA fallback).
+  Development: Vite (:5173) serves modules + HMR and proxies /api to Bun (:3000).
+  Shared types are compile-time only.
+end note
 
 SHOW_LEGEND()
 @enduml
