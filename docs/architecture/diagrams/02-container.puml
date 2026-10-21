@@ -1,21 +1,21 @@
 @startuml
 !include <C4/C4_Container>
-title Container - bhvr app (generated from template) @ a4993cc, v0.5.1
+title Container - Todo app
 
-Person(user, "End user")
-System_Boundary(b, "bhvr app") {
-  Container(client, "client", "Vite 6 + React 19 SPA, TypeScript", "Dev server or static bundle; reads VITE_SERVER_URL, default http://localhost:3000")
-  Container(server, "server", "Hono 4 on Bun", "export default app; Bun auto-serve; CORS open; GET / and GET /hello")
+Person(user, "End user", "A person who manages their personal todo list")
+
+System_Boundary(b, "Todo app") {
+  Container(client, "client (Todo SPA)", "React 19 SPA (static HTML/CSS/JS executed in browser)", "Todo UI: loads static assets, runs React in the browser, calls /api/todo via fetch.")
+  Container(server, "server (API & static)", "Hono 4 on Bun", "REST /api/todo CRUD + /api/health; CORS; in production also serves the built SPA (client/dist) with SPA fallback.")
 }
 
-Rel(user, client, "Loads SPA", "HTTP")
-Rel(client, server, "fetch GET /hello", "HTTP JSON")
+Rel(user, client, "Uses the SPA", "HTTP (browser)")
+Rel(client, server, "CRUD todos", "HTTP JSON /api/todo")
 
-note right of client
-  Both client and server depend on shared types
-  (workspace:*, compile-time, non-runtime).
-  client also declares unused "server": "workspace:*"
-  (non-runtime fact).
+note bottom of b
+  shared package provides TypeScript types only (compile-time dependency, not a runtime container).
+  Todos are stored in an in-memory Map inside the server process (non-persistent, cleared on restart).
+  In production the server also serves the built SPA static files (client/dist) with SPA fallback (same-origin).
 end note
 
 SHOW_LEGEND()
