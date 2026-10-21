@@ -23,9 +23,6 @@ COPY . .
 ENV NODE_ENV=production \
     CI=1 \
     TURBO_TELEMETRY_DISABLED=1
-# Baked into the client bundle by Vite at build time. Empty means same-origin.
-ARG VITE_SERVER_URL=""
-ENV VITE_SERVER_URL=${VITE_SERVER_URL}
 RUN bun run build
 
 # ---------- runtime ----------
