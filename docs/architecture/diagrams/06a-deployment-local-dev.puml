@@ -1,21 +1,25 @@
 @startuml
 !include <C4/C4_Deployment>
-title Deployment - local development (Bun + Turbo) @ a4993cc, v0.5.1
+title Deployment - local development
 
-Person(dev, "Developer", "Runs turbo dev/build on the generated app")
+Person(dev, "Developer")
 
-Deployment_Node(devMachine, "Developer machine", "bun 1.2.4 (packageManager), turbo") {
-  Container(devVite, "Vite dev server", "vite", "Default port 5173")
-  Container(devServer, "Bun server", "bun --watch run src/index.ts", "Default port 3000 unless PORT set")
+Deployment_Node(devMachine, "Developer machine", "bun 1.4.2 + turbo") {
+  Deployment_Node(browser, "Web Browser") {
+    Container(client, "client (Todo SPA)", "React 19 (dev modules)", "Runs in the browser with HMR")
+  }
+  Container(vite, "Vite dev server", "vite :5173", "Serves modules with HMR and proxies /api to :3000")
+  Container(server, "server (API & static)", "Hono 4 on Bun", "REST /api/todo + /api/health")
 }
 
-Rel(dev, devVite, "Opens app in browser", "HTTP :5173")
-Rel(devVite, devServer, "Browser fetch /hello", "HTTP :3000")
+Rel(dev, browser, "Opens the app", "HTTP :5173")
+Rel(client, vite, "Loads modules", "HTTP :5173")
+Rel(client, server, "Proxied /api/*", "HTTP :3000")
 
 note bottom of devMachine
-  shared/dist is emitted by tsc --watch
-  (compile-time / build-time, non-runtime).
-  postinstall builds shared + server before dev.
+  turbo runs Vite and bun --watch concurrently.
+  shared is built by tsc --watch (compile-time).
+  Vite proxies /api to Bun so the browser sees a single origin.
 end note
 
 SHOW_LEGEND()
