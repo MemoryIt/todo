@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
       args:
         BUN_IMAGE: ${BUN_IMAGE:-oven/bun:1.4.2-debian}
-    image: bhvr:${APP_TAG:-dev}
-    container_name: bhvr
+    image: todo:${APP_TAG:-dev}
+    container_name: todo
     init: true
     environment:
       NODE_ENV: production

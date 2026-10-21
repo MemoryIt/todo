@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "bhvr",
+      "name": "todo",
       "devDependencies": {
         "bun-types": "latest",
         "turbo": "^2.6.3",
