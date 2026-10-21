@@ -1,23 +1,22 @@
 @startuml
 !include <C4/C4_Component>
-title Component - server (Hono on Bun) @ a4993cc, v0.5.1
+title Component - server (API & static)
 
-Container(client, "client", "React SPA")
+Container(client, "client (Todo SPA)", "React 19 SPA", "Calls /api/todo")
 
-Container_Boundary(s, "server") {
-  Component(apiEntry, "apiEntry", "export default app", "Bun auto-serve of the Hono app; port 3000 unless PORT set")
-  Component(apiCors, "apiCors", "hono/cors", "Applied to all routes, default options (any origin)")
-  Component(apiRoutes, "apiRoutes", "Hono handlers", "GET / text; GET /hello JSON ApiResponse {message, success:true}")
+Container_Boundary(s, "server (API & static)") {
+  Component(api, "API routes", "Hono handlers (api.ts + health)", "GET/POST /api/todo, PATCH/DELETE /api/todo/:id, GET /api/health; request validation and status codes")
+  Component(domain, "Domain", "domain.ts", "validateTitle (trim, non-empty, <=200) + listTodos / createTodo / setCompleted / removeTodo")
+  Component(store, "In-memory store", "store.ts", "Process-private Map<string, Todo>; findAll / findById / save / deleteById (cleared on restart)")
 }
 
-Rel(client, apiEntry, "HTTP")
-Rel(apiEntry, apiCors, "Applies middleware")
-Rel(apiCors, apiRoutes, "next()")
+Rel(client, api, "CRUD /api/todo", "HTTP JSON")
+Rel(api, domain, "Uses")
+Rel(domain, store, "Reads from and writes to")
 
 note bottom of s
-  apiRoutes uses shared ApiResponse type
-  (compile-time, non-runtime).
-  tsc build → dist is build-time only.
+  index.ts assembles the Hono app: app.use(cors()), mounts routes, and in production serves client/dist with SPA fallback (deployment concern).
+  shared package provides Todo / TodoList / input types (compile-time only, non-runtime).
 end note
 
 SHOW_LEGEND()
