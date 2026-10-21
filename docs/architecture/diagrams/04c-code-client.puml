@@ -1,5 +1,5 @@
 @startuml
-title Code - client
+title Code - client @ v0.0.1
 skinparam classAttributeIconSize 0
 
 package "client" {

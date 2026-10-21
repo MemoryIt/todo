@@ -1,6 +1,6 @@
 @startuml
 !include <C4/C4_Dynamic>
-title Dynamic - Initial load (production)
+title Dynamic - Initial load (production) @ v0.0.1
 
 Person(user, "End user")
 
