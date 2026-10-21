@@ -1,25 +1,20 @@
 @startuml
 !include <C4/C4_Component>
-title Component - client (Vite + React) @ a4993cc, v0.5.1
+title Component - client (Todo SPA)
 
 Person(user, "End user")
-Container(server, "server", "Hono", "GET /hello")
+Container(server, "server (API & static)", "Hono 4 on Bun", "Provides /api/todo and serves static files in production")
 
-Container_Boundary(c, "client") {
-  Component(webEntry, "webEntry", "index.html + main.tsx", "Vite runtime entry: loads #root, createRoot, StrictMode")
-  Component(webSpa, "webSpa", "React function component", "Renders UI, reads VITE_SERVER_URL, handles Call API click, manages useState<ApiResponse>")
+Container_Boundary(c, "client (Todo SPA)") {
+  Component(app, "App", "App.tsx", "Root component: layout, filter state, composes UI. Bootstrapped by index.html + main.tsx")
+  Component(model, "Model / API", "api.ts + useTodos.ts", "Todo CRUD client + local state management")
+  Component(ui, "UI components", "Composer / Filter / List / Item / Stats", "Presentational components")
 }
 
-Rel(user, webSpa, "Interacts with")
-Rel(webEntry, webSpa, "Bootstraps / renders")
-Rel(webSpa, server, "fetch SERVER_URL/hello", "HTTP")
-
-note right of webSpa
-  Uses shared ApiResponse type
-  (compile-time import type, non-runtime).
-  vite.config.ts is build-time only
-  (plugin-react, no proxy) — not a runtime component.
-end note
+Rel(user, c, "Uses")
+Rel(app, model, "Uses")
+Rel(app, ui, "Composes")
+Rel(model, server, "fetch /api/todo", "HTTP JSON")
 
 SHOW_LEGEND()
 @enduml
