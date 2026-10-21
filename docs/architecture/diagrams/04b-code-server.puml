@@ -1,20 +1,53 @@
 @startuml
-title Code - server (Hono app) @ a4993cc, v0.5.1
-
+title Code - server
 skinparam classAttributeIconSize 0
 
 package "server" {
-  class "Hono app" as honoApp <<default export>> {
+  class store <<module>> {
+    -todos : Map<string, Todo>
+    +findAll() : TodoList
+    +findById(id: string) : Todo | undefined
+    +save(todo: Todo) : Todo
+    +deleteById(id: string) : boolean
+  }
+
+  class domain <<module>> {
+    +TITLE_MAX_LENGTH : 200
+    +validateTitle(value: unknown) : TitleValidation
+    +listTodos() : TodoList
+    +createTodo(title: string) : Todo
+    +setCompleted(id: string, completed: boolean) : Todo | undefined
+    +removeTodo(id: string) : boolean
+  }
+
+  class api <<module>> {
+    +todoApi : Hono
+    +GET /
+    +POST /
+    +PATCH /:id
+    +DELETE /:id
+  }
+
+  class index <<module>> {
+    +app : Hono
     +use(cors())
-    +get("/") : text "Hello Hono!"
-    +get("/hello") : json ApiResponse
+    +route('/api/todo', todoApi)
+    +GET /api/health
   }
 }
 
-note bottom of honoApp
-  /hello constructs a literal matching ApiResponse
-  (compile-time type check, non-runtime).
-  Bun serves the default export's fetch.
+domain --> store : uses
+api --> domain : uses
+index --> api : mounts
+
+note bottom of store
+  Process-private Map. Cleared on restart.
+  Types from shared (see 04a).
+end note
+
+note bottom of index
+  Assembles the app. In production also serves client/dist (deployment concern).
+  Bun auto-serves the default export.
 end note
 
 @enduml
