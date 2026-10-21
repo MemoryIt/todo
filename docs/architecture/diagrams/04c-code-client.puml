@@ -1,19 +1,41 @@
 @startuml
-title Code - client (React App) @ a4993cc, v0.5.1
-
+title Code - client
 skinparam classAttributeIconSize 0
 
 package "client" {
-  class "React App" as reactApp <<component>> {
-    -data : ApiResponse | undefined
-    +sendRequest() : Promise<void>
+  class api <<module>> {
+    +fetchTodos() : Promise<TodoList>
+    +createTodo(input: CreateTodoInput) : Promise<Todo>
+    +updateTodo(id: string, input: UpdateTodoInput) : Promise<Todo>
+    +deleteTodo(id: string) : Promise<void>
+  }
+
+  class useTodos <<hook>> {
+    -todos : Todo[]
+    -loading : boolean
+    -error : unknown
+    +addTodo()
+    +toggleTodo()
+    +removeTodo()
+  }
+
+  class App <<component>> {
+    -filter : 'all' | 'active' | 'completed'
+    +renders Composer / Filter / List / Item / Stats
   }
 }
 
-note bottom of reactApp
-  Reads SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000".
-  sendRequest fetches /hello and casts res.json() to ApiResponse
-  (compile-time cast, no runtime validation).
+useTodos --> api : calls
+App --> useTodos : uses
+
+note bottom of api
+  Pure HTTP transport to /api/todo.
+  Types from shared (see 04a).
+end note
+
+note bottom of App
+  Bootstrapped by index.html + main.tsx.
+  Presentational UI components may live in the same file or sibling files.
 end note
 
 @enduml
