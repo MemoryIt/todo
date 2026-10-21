@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+title System Context - Todo app
+
+Person(user, "End user", "A person who manages their personal todo list")
+
+System(app, "Todo app", "A web application that lets a user create, complete and delete todo items")
+
+Rel(user, app, "Creates and manages todos using")
+
+SHOW_LEGEND()
+@enduml
