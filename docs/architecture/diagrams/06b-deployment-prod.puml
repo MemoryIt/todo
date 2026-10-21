@@ -1,0 +1,29 @@
+@startuml
+!include <C4/C4_Deployment>
+title Deployment - production (single container)
+
+Person(user, "End user")
+
+Deployment_Node(userDevice, "User's device") {
+  Deployment_Node(browser, "Web Browser") {
+    Container(client, "client (Todo SPA)", "React 19 SPA (static HTML/CSS/JS)", "Runs in the browser")
+  }
+}
+
+Deployment_Node(docker, "Docker container", "oven/bun:1.4.2, single Bun process :3000") {
+  Container(server, "server (API & static)", "Hono 4 on Bun", "Serves client/dist + /api/todo + /api/health")
+}
+
+Rel(user, client, "Uses")
+Rel(client, server, "CRUD /api/todo", "HTTP JSON (same-origin)")
+
+note right of docker
+  client/dist is copied into the image at build time.
+  NODE_ENV=production, PORT=3000.
+  HEALTHCHECK hits /api/health.
+  In-memory Map is non-persistent (cleared on restart).
+  Multi-stage build details are in Dockerfile (not shown).
+end note
+
+SHOW_LEGEND()
+@enduml
