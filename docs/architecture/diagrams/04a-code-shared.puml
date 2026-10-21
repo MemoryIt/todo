@@ -1,19 +1,27 @@
 @startuml
-title Code - shared (ApiResponse type) @ a4993cc, v0.5.1
-
+title Code - shared (types)
 skinparam classAttributeIconSize 0
 
 package "shared" {
-  class ApiResponse <<type>> {
-    +message : string
-    +success : true
+  class Todo <<type>> {
+    +id : string
+    +title : string
+    +completed : boolean
+  }
+  class TodoList <<type>> {
+    +Todo[]
+  }
+  class CreateTodoInput <<type>> {
+    +title : string
+  }
+  class UpdateTodoInput <<type>> {
+    +completed : boolean
   }
 }
 
-note bottom of ApiResponse
-  Literal type true — no failure shape modelled.
-  Imported as type by client and server
-  (compile-time, non-runtime).
+note bottom of Todo
+  Compile-time only. Imported as type by client and server.
+  Not a runtime container or component.
 end note
 
 @enduml
