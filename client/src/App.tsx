@@ -1,45 +1,61 @@
-import { useState } from 'react'
-import type { ApiResponse } from 'shared'
+import { useMemo, useState } from 'react'
+import type { TodoList } from 'shared'
+import { useTodos } from './useTodos'
+import { Composer, Filter, Stats } from './TodoControls'
+import type { FilterValue } from './TodoControls'
+import { List } from './TodoList'
 import './App.css'
 
-// Empty VITE_SERVER_URL means same-origin (single-container production build).
-const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3000"
+const emptyMessages: Record<FilterValue, string> = {
+  all: 'No todos yet. Add your first one above.',
+  active: 'No active todos. Nice work!',
+  completed: 'No completed todos yet.',
+}
 
-function App() {
-  const [data, setData] = useState<ApiResponse | undefined>()
-
-  async function sendRequest() {
-    try {
-      const req = await fetch(`${SERVER_URL}/hello`)
-      const res: ApiResponse = await req.json()
-      setData(res)
-    } catch (error) {
-      console.log(error)
-    }
+function filterTodos(todos: TodoList, filter: FilterValue): TodoList {
+  if (filter === 'active') {
+    return todos.filter((todo) => !todo.completed)
   }
 
+  if (filter === 'completed') {
+    return todos.filter((todo) => todo.completed)
+  }
+
+  return todos
+}
+
+function App() {
+  const { todos, loading, error, addTodo, toggleTodo, removeTodo } = useTodos()
+  const [filter, setFilter] = useState<FilterValue>('all')
+
+  const visibleTodos = useMemo(
+    () => filterTodos(todos, filter),
+    [todos, filter],
+  )
+
+  const activeCount = useMemo(
+    () => todos.filter((todo) => !todo.completed).length,
+    [todos],
+  )
+
   return (
-    <>
-      <h1>bhvr</h1>
-      <h2>Bun + Hono + Vite + React</h2>
-      <p>A typesafe fullstack monorepo</p>
-      <div className="card">
-        <div className='button-container'>
-          <button onClick={sendRequest}>
-            Call API
-          </button>
-          <a className='docs-link' target='_blank' href="https://bhvr.dev">Docs</a>
-        </div>
-        {data && (
-          <pre className='response'>
-            <code>
-            Message: {data.message} <br />
-            Success: {data.success.toString()}
-            </code>
-          </pre>
-        )}
-      </div>
-    </>
+    <main className="todo-page">
+      <h1>Todo</h1>
+      <Composer onAdd={addTodo} />
+      <Stats activeCount={activeCount} />
+      <Filter value={filter} onChange={setFilter} />
+      {loading ? (
+        <p className="loading">Loading todos...</p>
+      ) : (
+        <List
+          todos={visibleTodos}
+          emptyMessage={emptyMessages[filter]}
+          onToggle={toggleTodo}
+          onDelete={removeTodo}
+        />
+      )}
+      {error && <p className="error">Request failed: {error}</p>}
+    </main>
   )
 }
 
