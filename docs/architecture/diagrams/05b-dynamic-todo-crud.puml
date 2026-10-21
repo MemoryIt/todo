@@ -1,0 +1,36 @@
+@startuml
+!include <C4/C4_Dynamic>
+title Dynamic - Todo CRUD (representative paths)
+
+Person(user, "End user")
+
+Container_Boundary(c, "client (Todo SPA)") {
+  Component(ui, "UI components")
+  Component(model, "Model / API")
+}
+
+Container_Boundary(s, "server (API & static)") {
+  Component(api, "API routes")
+  Component(domain, "Domain")
+  Component(store, "In-memory store")
+}
+
+Rel(user, ui, "Submits new todo")
+Rel(ui, model, "addTodo(title)")
+Rel(model, api, "POST /api/todo {title}", "HTTP JSON")
+Rel(api, domain, "validateTitle + createTodo")
+Rel(domain, store, "save()")
+Rel(store, domain, "Todo")
+Rel(domain, api, "returns Todo")
+Rel(api, model, "201 Todo")
+Rel(model, ui, "prepend to list")
+
+note right of api
+  Similar path for PATCH /api/todo/:id -> 200
+  and DELETE /api/todo/:id -> 204.
+  Validation failure -> 400; missing id -> 404.
+  Filtering (all/active/completed) is client-side only.
+end note
+
+SHOW_LEGEND()
+@enduml
