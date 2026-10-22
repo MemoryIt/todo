@@ -1,5 +1,5 @@
 import type { Todo, TodoList } from 'shared'
-import * as store from './store'
+import type { TodoStore } from './store'
 
 export const TITLE_MAX_LENGTH = 200
 
@@ -28,30 +28,50 @@ export function validateTitle(value: unknown): TitleValidation {
   return { ok: true, title }
 }
 
-export function listTodos(): TodoList {
-  return store.findAll()
-}
+export type CompletedValidation =
+  | { ok: true; completed: boolean }
+  | { ok: false; error: string }
 
-export function createTodo(title: string): Todo {
-  const todo: Todo = {
-    id: crypto.randomUUID(),
-    title,
-    completed: false,
+export function validateCompleted(value: unknown): CompletedValidation {
+  if (typeof value !== 'boolean') {
+    return { ok: false, error: 'completed must be a boolean' }
   }
 
-  return store.save(todo)
+  return { ok: true, completed: value }
 }
 
-export function setCompleted(id: string, completed: boolean): Todo | undefined {
-  const existing = store.findById(id)
+export type TodoService = {
+  listTodos(): TodoList
+  createTodo(title: string): Todo
+  setCompleted(id: string, completed: boolean): Todo | undefined
+  removeTodo(id: string): boolean
+}
 
-  if (!existing) {
-    return undefined
+/**
+ * Business actions for todos. The store is injected so the domain does not
+ * depend on a specific storage implementation.
+ */
+export function createTodoService(store: TodoStore): TodoService {
+  return {
+    listTodos: () => store.findAll(),
+
+    createTodo: (title) =>
+      store.save({
+        id: crypto.randomUUID(),
+        title,
+        completed: false,
+      }),
+
+    setCompleted: (id, completed) => {
+      const existing = store.findById(id)
+
+      if (!existing) {
+        return undefined
+      }
+
+      return store.save({ ...existing, completed })
+    },
+
+    removeTodo: (id) => store.deleteById(id),
   }
-
-  return store.save({ ...existing, completed })
-}
-
-export function removeTodo(id: string): boolean {
-  return store.deleteById(id)
 }

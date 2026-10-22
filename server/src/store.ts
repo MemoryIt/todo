@@ -1,23 +1,32 @@
 import type { Todo, TodoList } from 'shared'
 
-// Module-private in-memory store. This is the single source of truth for
-// todos and is intentionally cleared whenever the process restarts.
-const todos = new Map<string, Todo>()
-
-export function findAll(): TodoList {
-  // Map preserves insertion order, so reverse it to show the newest first.
-  return Array.from(todos.values()).reverse()
+/**
+ * Storage contract for todos. The domain layer depends on this interface
+ * instead of a concrete implementation, so the backing store can be swapped
+ * without touching business rules.
+ */
+export type TodoStore = {
+  findAll(): TodoList
+  findById(id: string): Todo | undefined
+  save(todo: Todo): Todo
+  deleteById(id: string): boolean
 }
 
-export function findById(id: string): Todo | undefined {
-  return todos.get(id)
-}
+/**
+ * In-memory implementation. The Map is private to each store instance and is
+ * intentionally cleared whenever the process restarts.
+ */
+export function createInMemoryTodoStore(): TodoStore {
+  const todos = new Map<string, Todo>()
 
-export function save(todo: Todo): Todo {
-  todos.set(todo.id, todo)
-  return todo
-}
-
-export function deleteById(id: string): boolean {
-  return todos.delete(id)
+  return {
+    // Map preserves insertion order, so reverse it to show the newest first.
+    findAll: () => Array.from(todos.values()).reverse(),
+    findById: (id) => todos.get(id),
+    save: (todo) => {
+      todos.set(todo.id, todo)
+      return todo
+    },
+    deleteById: (id) => todos.delete(id),
+  }
 }

@@ -2,8 +2,7 @@ import { Hono } from 'hono'
 import type { Context } from 'hono'
 import type { Todo } from 'shared'
 import * as domain from './domain'
-
-const todoApi = new Hono()
+import type { TodoService } from './domain'
 
 async function readJsonObject(
   c: Context,
@@ -21,56 +20,62 @@ async function readJsonObject(
   }
 }
 
-todoApi.get('/', (c) => {
-  return c.json({ todos: domain.listTodos() }, 200)
-})
+export function createTodoApi(service: TodoService): Hono {
+  const todoApi = new Hono()
 
-todoApi.post('/', async (c) => {
-  const body = await readJsonObject(c)
+  todoApi.get('/', (c) => {
+    return c.json({ todos: service.listTodos() }, 200)
+  })
 
-  if (!body) {
-    return c.json({ error: 'Invalid JSON body' }, 400)
-  }
+  todoApi.post('/', async (c) => {
+    const body = await readJsonObject(c)
 
-  const title = domain.validateTitle(body.title)
+    if (!body) {
+      return c.json({ error: 'Invalid JSON body' }, 400)
+    }
 
-  if (!title.ok) {
-    return c.json({ error: title.error }, 400)
-  }
+    const title = domain.validateTitle(body.title)
 
-  const todo: Todo = domain.createTodo(title.title)
+    if (!title.ok) {
+      return c.json({ error: title.error }, 400)
+    }
 
-  return c.json(todo, 201)
-})
+    const todo: Todo = service.createTodo(title.title)
 
-todoApi.patch('/:id', async (c) => {
-  const body = await readJsonObject(c)
+    return c.json(todo, 201)
+  })
 
-  if (!body) {
-    return c.json({ error: 'Invalid JSON body' }, 400)
-  }
+  todoApi.patch('/:id', async (c) => {
+    const body = await readJsonObject(c)
 
-  if (typeof body.completed !== 'boolean') {
-    return c.json({ error: 'completed must be a boolean' }, 400)
-  }
+    if (!body) {
+      return c.json({ error: 'Invalid JSON body' }, 400)
+    }
 
-  const todo = domain.setCompleted(c.req.param('id'), body.completed)
+    const completed = domain.validateCompleted(body.completed)
 
-  if (!todo) {
-    return c.json({ error: 'Todo not found' }, 404)
-  }
+    if (!completed.ok) {
+      return c.json({ error: completed.error }, 400)
+    }
 
-  return c.json(todo, 200)
-})
+    const todo = service.setCompleted(c.req.param('id'), completed.completed)
 
-todoApi.delete('/:id', (c) => {
-  const removed = domain.removeTodo(c.req.param('id'))
+    if (!todo) {
+      return c.json({ error: 'Todo not found' }, 404)
+    }
 
-  if (!removed) {
-    return c.json({ error: 'Todo not found' }, 404)
-  }
+    return c.json(todo, 200)
+  })
 
-  return c.body(null, 204)
-})
+  todoApi.delete('/:id', (c) => {
+    const removed = service.removeTodo(c.req.param('id'))
 
-export default todoApi
+    if (!removed) {
+      return c.json({ error: 'Todo not found' }, 404)
+    }
+
+    return c.body(null, 204)
+  })
+
+  return todoApi
+}
