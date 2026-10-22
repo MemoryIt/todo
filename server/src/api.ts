@@ -1,8 +1,7 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import type { Todo } from 'shared'
-import * as domain from './domain'
-import type { TodoService } from './domain'
+import { validateTitle, validateCompleted, type TodoService } from './domain'
 
 async function readJsonObject(
   c: Context,
@@ -34,7 +33,7 @@ export function createTodoApi(service: TodoService): Hono {
       return c.json({ error: 'Invalid JSON body' }, 400)
     }
 
-    const title = domain.validateTitle(body.title)
+    const title = validateTitle(body.title)
 
     if (!title.ok) {
       return c.json({ error: title.error }, 400)
@@ -52,7 +51,7 @@ export function createTodoApi(service: TodoService): Hono {
       return c.json({ error: 'Invalid JSON body' }, 400)
     }
 
-    const completed = domain.validateCompleted(body.completed)
+    const completed = validateCompleted(body.completed)
 
     if (!completed.ok) {
       return c.json({ error: completed.error }, 400)
