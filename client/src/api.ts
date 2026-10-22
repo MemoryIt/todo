@@ -27,6 +27,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(await readError(res))
   }
 
+  if (res.status === 204) {
+    return undefined as T
+  }
+
   return (await res.json()) as T
 }
 
@@ -51,12 +55,8 @@ export function updateTodo(id: string, input: UpdateTodoInput): Promise<Todo> {
   })
 }
 
-export async function deleteTodo(id: string): Promise<void> {
-  const res = await fetch(`/api/todo/${encodeURIComponent(id)}`, {
+export function deleteTodo(id: string): Promise<void> {
+  return request<void>(`/api/todo/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
-
-  if (!res.ok) {
-    throw new Error(await readError(res))
-  }
 }

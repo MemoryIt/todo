@@ -10,6 +10,7 @@ export function useTodos() {
   const [todos, setTodos] = useState<TodoList>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
+  const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +42,20 @@ export function useTodos() {
     }
   }, [])
 
+  const markPending = useCallback((id: string, pending: boolean) => {
+    setPendingIds((prev) => {
+      const next = new Set(prev)
+
+      if (pending) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
+
+      return next
+    })
+  }, [])
+
   const addTodo = useCallback(
     async (title: string): Promise<Todo | undefined> => {
       try {
@@ -58,6 +73,8 @@ export function useTodos() {
 
   const toggleTodo = useCallback(
     async (id: string, completed: boolean): Promise<Todo | undefined> => {
+      markPending(id, true)
+
       try {
         const updated = await api.updateTodo(id, { completed })
         setTodos((prev) =>
@@ -68,22 +85,31 @@ export function useTodos() {
       } catch (err) {
         setError(toMessage(err))
         return undefined
+      } finally {
+        markPending(id, false)
       }
     },
-    [],
+    [markPending],
   )
 
-  const removeTodo = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      await api.deleteTodo(id)
-      setTodos((prev) => prev.filter((todo) => todo.id !== id))
-      setError(undefined)
-      return true
-    } catch (err) {
-      setError(toMessage(err))
-      return false
-    }
-  }, [])
+  const removeTodo = useCallback(
+    async (id: string): Promise<boolean> => {
+      markPending(id, true)
 
-  return { todos, loading, error, addTodo, toggleTodo, removeTodo }
+      try {
+        await api.deleteTodo(id)
+        setTodos((prev) => prev.filter((todo) => todo.id !== id))
+        setError(undefined)
+        return true
+      } catch (err) {
+        setError(toMessage(err))
+        return false
+      } finally {
+        markPending(id, false)
+      }
+    },
+    [markPending],
+  )
+
+  return { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo }
 }

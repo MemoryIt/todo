@@ -2,17 +2,19 @@ import type { Todo, TodoList } from 'shared'
 
 type ItemProps = {
   todo: Todo
+  pending: boolean
   onToggle: (id: string, completed: boolean) => void
   onDelete: (id: string) => void
 }
 
-function Item({ todo, onToggle, onDelete }: ItemProps) {
+function Item({ todo, pending, onToggle, onDelete }: ItemProps) {
   return (
     <li className={todo.completed ? 'todo-item completed' : 'todo-item'}>
       <label className="todo-label">
         <input
           type="checkbox"
           checked={todo.completed}
+          disabled={pending}
           onChange={() => onToggle(todo.id, !todo.completed)}
         />
         <span className="todo-title">{todo.title}</span>
@@ -21,6 +23,7 @@ function Item({ todo, onToggle, onDelete }: ItemProps) {
         type="button"
         className="delete-button"
         aria-label={`Delete ${todo.title}`}
+        disabled={pending}
         onClick={() => onDelete(todo.id)}
       >
         Delete
@@ -32,11 +35,18 @@ function Item({ todo, onToggle, onDelete }: ItemProps) {
 type ListProps = {
   todos: TodoList
   emptyMessage: string
+  pendingIds: Set<string>
   onToggle: (id: string, completed: boolean) => void
   onDelete: (id: string) => void
 }
 
-export function List({ todos, emptyMessage, onToggle, onDelete }: ListProps) {
+export function List({
+  todos,
+  emptyMessage,
+  pendingIds,
+  onToggle,
+  onDelete,
+}: ListProps) {
   if (todos.length === 0) {
     return <p className="empty">{emptyMessage}</p>
   }
@@ -47,6 +57,7 @@ export function List({ todos, emptyMessage, onToggle, onDelete }: ListProps) {
         <Item
           key={todo.id}
           todo={todo}
+          pending={pendingIds.has(todo.id)}
           onToggle={onToggle}
           onDelete={onDelete}
         />

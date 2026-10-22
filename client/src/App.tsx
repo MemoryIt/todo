@@ -25,7 +25,8 @@ function filterTodos(todos: TodoList, filter: FilterValue): TodoList {
 }
 
 function App() {
-  const { todos, loading, error, addTodo, toggleTodo, removeTodo } = useTodos()
+  const { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo } =
+    useTodos()
   const [filter, setFilter] = useState<FilterValue>('all')
 
   const visibleTodos = useMemo(
@@ -50,6 +51,7 @@ function App() {
         <List
           todos={visibleTodos}
           emptyMessage={emptyMessages[filter]}
+          pendingIds={pendingIds}
           onToggle={toggleTodo}
           onDelete={removeTodo}
         />
