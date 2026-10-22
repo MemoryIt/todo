@@ -5,9 +5,9 @@ title Component - server (API & static) @ v0.0.1
 Container(client, "client (Todo SPA)", "React 19 SPA", "Calls /api/todo")
 
 Container_Boundary(s, "server (API & static)") {
-  Component(api, "API routes", "Hono handlers (api.ts + health)", "GET/POST /api/todo, PATCH/DELETE /api/todo/:id, GET /api/health; request validation and status codes")
-  Component(domain, "Domain", "domain.ts", "validateTitle (trim, non-empty, <=200) + listTodos / createTodo / setCompleted / removeTodo")
-  Component(store, "In-memory store", "store.ts", "Process-private Map<string, Todo>; findAll / findById / save / deleteById (cleared on restart)")
+  Component(api, "API routes", "Hono handlers (api.ts + health)", "createTodoApi(service); GET/POST /api/todo, PATCH/DELETE /api/todo/:id, GET /api/health; HTTP status codes")
+  Component(domain, "Domain", "domain.ts", "validateTitle + validateCompleted; createTodoService(store) -> TodoService (listTodos / createTodo / setCompleted / removeTodo)")
+  Component(store, "In-memory store", "store.ts", "TodoStore interface + createInMemoryTodoStore(); instance-private Map<string, Todo> (cleared on restart)")
 }
 
 Rel(client, api, "CRUD /api/todo", "HTTP JSON")
@@ -15,7 +15,7 @@ Rel(api, domain, "Uses")
 Rel(domain, store, "Reads from and writes to")
 
 note bottom of s
-  index.ts assembles the Hono app: app.use(cors()), mounts routes, and in production serves client/dist with SPA fallback (deployment concern).
+  index.ts is the composition root: createInMemoryTodoStore() -> createTodoService(store) -> createTodoApi(service); it mounts routes and in production serves client/dist with SPA fallback (deployment concern).
   shared package provides Todo / TodoList / input types (compile-time only, non-runtime).
 end note
 

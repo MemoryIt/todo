@@ -28,7 +28,7 @@ Rel(model, ui, "prepend to list")
 note right of api
   Similar path for PATCH /api/todo/:id -> 200
   and DELETE /api/todo/:id -> 204.
-  Validation failure -> 400; missing id -> 404.
+  title (POST) and completed (PATCH) are validated in the domain; failure -> 400; missing id -> 404.
   Filtering (all/active/completed) is client-side only.
 end note
 

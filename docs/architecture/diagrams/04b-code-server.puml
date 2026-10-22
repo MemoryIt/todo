@@ -3,25 +3,33 @@ title Code - server @ v0.0.1
 skinparam classAttributeIconSize 0
 
 package "server" {
-  class store <<module>> {
-    -todos : Map<string, Todo>
+  interface TodoStore {
     +findAll() : TodoList
     +findById(id: string) : Todo | undefined
     +save(todo: Todo) : Todo
     +deleteById(id: string) : boolean
   }
 
-  class domain <<module>> {
-    +TITLE_MAX_LENGTH : 200
-    +validateTitle(value: unknown) : TitleValidation
+  class store <<module>> {
+    +createInMemoryTodoStore() : TodoStore
+  }
+
+  interface TodoService {
     +listTodos() : TodoList
     +createTodo(title: string) : Todo
     +setCompleted(id: string, completed: boolean) : Todo | undefined
     +removeTodo(id: string) : boolean
   }
 
+  class domain <<module>> {
+    +TITLE_MAX_LENGTH : 200
+    +validateTitle(value: unknown) : TitleValidation
+    +validateCompleted(value: unknown) : CompletedValidation
+    +createTodoService(store: TodoStore) : TodoService
+  }
+
   class api <<module>> {
-    +todoApi : Hono
+    +createTodoApi(service: TodoService) : Hono
     +GET /
     +POST /
     +PATCH /:id
@@ -31,22 +39,32 @@ package "server" {
   class index <<module>> {
     +app : Hono
     +use(cors())
-    +route('/api/todo', todoApi)
+    +route('/api/todo', createTodoApi(todoService))
     +GET /api/health
   }
 }
 
-domain --> store : uses
-api --> domain : uses
+store ..|> TodoStore : implements
+domain ..> TodoStore : depends on
+domain ..> TodoService : creates
+api --> TodoService : calls
+index --> store : creates
+index --> domain : creates
 index --> api : mounts
 
 note bottom of store
-  Process-private Map. Cleared on restart.
+  In-memory Map is private to the store instance. Cleared on restart.
   Types from shared (see 04a).
 end note
 
+note bottom of domain
+  Holds all input validation (title, completed).
+  createTodoService receives its TodoStore dependency (no concrete import).
+end note
+
 note bottom of index
-  Assembles the app. In production also serves client/dist (deployment concern).
+  Composition root: createInMemoryTodoStore() -> createTodoService(store) -> createTodoApi(service).
+  In production also serves client/dist (deployment concern).
   Bun auto-serves the default export.
 end note
 
