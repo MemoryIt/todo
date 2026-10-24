@@ -11,10 +11,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "bun --watch run src/index.ts"
+    "dev": "bun --env-file=../.env --watch run src/index.ts",
+    "start": "bun --env-file=../.env run src/index.ts"
   },
   "dependencies": {
-    "hono": "^4.10.8",
+    "@todo/ai": "workspace:*",
+    "hono": "4.13.7",
     "shared": "workspace:*"
   },
   "devDependencies": {
