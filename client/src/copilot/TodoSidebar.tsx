@@ -13,7 +13,8 @@ type TodoSidebarProps = {
 function Sidebar({ onChanged }: TodoSidebarProps) {
   useRefreshOnRunEnd(AGENT_IDS.todo, onChanged)
 
-  return <CopilotSidebar />
+  // Collapsed by default; the built-in toggle button on the right opens it.
+  return <CopilotSidebar defaultOpen={false} position="right" />
 }
 
 /**
