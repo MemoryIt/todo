@@ -8,6 +8,8 @@ a TypeScript monorepo.
 - [Bun](https://bun.sh) — runtime and package manager
 - [Hono](https://hono.dev) — backend API
 - [Vite](https://vitejs.dev) + [React](https://react.dev) — frontend
+- [CopilotKit](https://www.copilotkit.ai) + [Mastra](https://mastra.ai) — Todo agent
+- [AG-UI](https://docs.ag-ui.com) — protocol between the runtime and the agent
 - [Turbo](https://turbo.build) — monorepo task runner
 - TypeScript types shared between client and server
 
@@ -15,9 +17,10 @@ a TypeScript monorepo.
 
 ```
 .
-├── client/             # Vite + React SPA
-├── server/             # Hono API (in-memory todo store)
-├── shared/             # Shared TypeScript types
+├── client/             # Vite + React SPA + collapsible agent sidebar
+├── server/             # Hono API (in-memory todo store) + composition root
+├── ai/                 # Embedded AI edge (CopilotKit runtime + Mastra agent)
+├── shared/             # Shared TypeScript types, AGENT_IDS, TodoPort
 ├── docs/architecture/  # C4 diagrams
 ├── Dockerfile
 └── docker-compose.yml
@@ -32,9 +35,40 @@ a TypeScript monorepo.
 | PATCH  | `/api/todo/:id` | Set completed (`{ completed }`) |
 | DELETE | `/api/todo/:id` | Delete a todo                   |
 | GET    | `/api/health`   | Health check (`{ ok: true }`)   |
+| POST   | `/api/copilotkit` | CopilotKit runtime (single-route) |
 
 Todos are stored in an in-memory `Map` inside the server process and are
 cleared when the process restarts.
+
+## Todo Agent (AI)
+
+The AI edge lives in `ai/` and is embedded into the server process. It exposes
+the CopilotKit runtime at `/api/copilotkit` and backs it with a Mastra agent
+(`@ag-ui/mastra` over AG-UI 1.x). The agent uses **server-side tools** that call
+the existing domain service through an in-process `TodoPort`:
+
+| Tool | Behaviour |
+| ---- | --------- |
+| `listTodos` | List/search todos (optional status / query) |
+| `addTodo` | Add a todo by title |
+| `toggleTodo` | Mark completed / cancel completion by id |
+| `removeTodo` | Delete by id |
+
+The frontend has no tools: it only renders the official collapsible
+`CopilotSidebar`. Because the agent mutates data outside React state, the
+sidebar refetches the list after each run. The manual UI keeps working even
+when the LLM is not configured — only the sidebar fails.
+
+Configure the server-only model endpoint in `.env` (see `.env.example`):
+
+```bash
+LLM_BASE_URL=http://litellm-app:4000/v1   # must include /v1
+LLM_API_KEY=<secret>
+LLM_MODEL=deepseek/deepseek-v4-flash
+```
+
+`server` loads `.env` via `--env-file=../.env`; the LLM key never reaches the
+client bundle.
 
 ## Development
 
