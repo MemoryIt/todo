@@ -4,6 +4,7 @@ import { useTodos } from './useTodos'
 import { Composer, Filter, Stats } from './TodoControls'
 import type { FilterValue } from './TodoControls'
 import { List } from './TodoList'
+import { TodoSidebar } from './copilot/TodoSidebar'
 import './App.css'
 
 const emptyMessages: Record<FilterValue, string> = {
@@ -25,7 +26,7 @@ function filterTodos(todos: TodoList, filter: FilterValue): TodoList {
 }
 
 function App() {
-  const { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo } =
+  const { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo, refetch } =
     useTodos()
   const [filter, setFilter] = useState<FilterValue>('all')
 
@@ -57,6 +58,7 @@ function App() {
         />
       )}
       {error && <p className="error">Request failed: {error}</p>}
+      <TodoSidebar onChanged={refetch} />
     </main>
   )
 }

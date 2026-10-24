@@ -111,5 +111,26 @@ export function useTodos() {
     [markPending],
   )
 
-  return { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo }
+  const refetch = useCallback(async (): Promise<TodoList | undefined> => {
+    try {
+      const data = await api.fetchTodos()
+      setTodos(data)
+      setError(undefined)
+      return data
+    } catch (err) {
+      setError(toMessage(err))
+      return undefined
+    }
+  }, [])
+
+  return {
+    todos,
+    loading,
+    error,
+    pendingIds,
+    addTodo,
+    toggleTodo,
+    removeTodo,
+    refetch,
+  }
 }
