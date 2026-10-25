@@ -100,7 +100,12 @@ docker compose up --build
 
 The container listens on port 3000 and is not published to the host by default;
 publish it (`ports: "3000:3000"`) or reach it through Portainer / an attached
-proxy network. All environment variables have defaults — see `.env.example`.
+proxy network.
+
+`docker compose` forwards the server-only `LLM_*` variables from `.env` into the
+container (see `.env.example`). Without them the todo UI still works; only the
+agent sidebar fails. `NODE_ENV` and `PORT` are fixed by the compose file, while
+`APP_TAG` and `BUN_IMAGE` are used at build time.
 
 ## Architecture
 

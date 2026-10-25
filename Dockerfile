@@ -14,6 +14,7 @@ COPY package.json bun.lock ./
 COPY client/package.json client/
 COPY server/package.json server/
 COPY shared/package.json shared/
+COPY ai/package.json ai/
 # --ignore-scripts skips the root postinstall (turbo build) until the sources exist.
 RUN bun install --frozen-lockfile --ignore-scripts
 
@@ -35,6 +36,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/bun.lock ./bun.lock
 COPY --from=build /app/shared ./shared
+COPY --from=build /app/ai ./ai
 COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
 USER bun
