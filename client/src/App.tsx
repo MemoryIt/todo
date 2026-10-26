@@ -1,5 +1,5 @@
 import { TodoProvider, TodoView } from './features/todo'
-import { TodoSidebar } from './copilot/TodoSidebar'
+import { TodoAgentSidebar } from './features/agent'
 import './App.css'
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
     <main className="todo-page">
       <TodoProvider>
         <TodoView />
-        <TodoSidebar />
+        <TodoAgentSidebar />
       </TodoProvider>
     </main>
   )
