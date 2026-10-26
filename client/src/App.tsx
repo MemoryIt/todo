@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useTodos } from './useTodos'
+import { useTodos } from './features/todo/useTodos'
 import { Composer, Filter, Stats } from './TodoControls'
 import type { FilterValue } from './features/todo/model'
 import {
