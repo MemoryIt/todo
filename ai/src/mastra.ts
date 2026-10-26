@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core"
 import { AGENT_IDS } from "shared"
 import type { TodoPort } from "shared"
 import { createTodoAgent, TODO_AGENT_ID } from "./agents/todo"
+import { createObservability } from "./observability"
 
 export type AgentFactory = () => ReturnType<typeof createTodoAgent>
 
@@ -40,7 +41,10 @@ export function createMastra(todoPort: TodoPort): Mastra {
     }
   }
 
+  const observability = createObservability()
+
   return new Mastra({
     agents: Object.fromEntries(ids.map((id) => [id, factories[id]!()])),
+    ...(observability ? { observability } : {}),
   })
 }
