@@ -14,6 +14,7 @@ COPY package.json bun.lock ./
 COPY client/package.json client/
 COPY server/package.json server/
 COPY shared/package.json shared/
+COPY ai/package.json ai/
 # --ignore-scripts skips the root postinstall (turbo build) until the sources exist.
 RUN bun install --frozen-lockfile --ignore-scripts
 
@@ -30,13 +31,25 @@ FROM ${BUN_IMAGE} AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
+    DATABASE_PATH=/app/data/todo.db \
     NPM_CONFIG_REGISTRY=https://registry.npmmirror.com/
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/bun.lock ./bun.lock
+# Workspace packages are symlinked from node_modules (@todo/ai -> ../../ai,
+# shared -> ../shared), so every workspace the server imports at runtime must
+# exist here as well; otherwise Bun fails with
+# `ENOENT reading "/app/node_modules/@todo/ai"` on startup.
 COPY --from=build /app/shared ./shared
+COPY --from=build /app/ai ./ai
 COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
+
+# SQLite needs a writable directory, but /app is owned by root. Create the
+# parent of DATABASE_PATH and hand it to the unprivileged user; a volume
+# mounted here inherits these permissions when Docker seeds it.
+RUN mkdir -p /app/data && chown bun:bun /app/data
+
 USER bun
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

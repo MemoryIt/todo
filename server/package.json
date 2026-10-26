@@ -12,7 +12,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "bun --env-file=../.env --watch run src/index.ts",
-    "start": "bun --env-file=../.env run src/index.ts"
+    "start": "bun --env-file=../.env run src/index.ts",
+    "test": "bun test"
+
   },
   "dependencies": {
     "@todo/ai": "workspace:*",

@@ -6,7 +6,7 @@ Person(user, "End user", "A person who manages their personal todo list")
 
 System_Boundary(b, "Todo app") {
   Container(client, "client (Todo SPA)", "React 19 SPA (static HTML/CSS/JS executed in browser)", "Todo UI: loads static assets, runs React in the browser, calls /api/todo via fetch.")
-  Container(server, "server (API & static)", "Hono 4 on Bun", "REST /api/todo CRUD + /api/health; CORS; in production also serves the built SPA (client/dist) with SPA fallback.")
+  Container(server, "server (API & static)", "Hono 4 on Bun", "REST /api/todo CRUD + /api/health (DB probe); CORS; persists todos in SQLite; in production also serves the built SPA (client/dist) with SPA fallback.")
 }
 
 Rel(user, client, "Uses the SPA", "HTTP (browser)")
@@ -14,7 +14,8 @@ Rel(client, server, "CRUD todos", "HTTP JSON /api/todo")
 
 note bottom of b
   shared package provides TypeScript types only (compile-time dependency, not a runtime container).
-  Todos are stored in an in-memory Map inside the server process (non-persistent, cleared on restart).
+  Todos are persisted in a SQLite file inside the server container (DATABASE_PATH, default ./data/todo.db), migrated on boot.
+  The HTTP API and the embedded AI edge share the same store.
   In production the server also serves the built SPA static files (client/dist) with SPA fallback (same-origin).
 end note
 

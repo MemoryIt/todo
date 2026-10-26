@@ -14,6 +14,11 @@ coverage
 .env
 .env.*
 !.env.example
+# local SQLite artifacts must never reach the build context
+data
+**/*.db
+**/*.db-wal
+**/*.db-shm
 Dockerfile
 docker-compose.yml
 README.md

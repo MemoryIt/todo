@@ -4,22 +4,26 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/bun'
 import { createAiApp } from '@todo/ai'
 import { createTodoApi } from './api'
+import { checkDatabase, DEFAULT_DATABASE_PATH, openDatabase } from './db'
 import { createTodoService } from './domain'
-import { createInMemoryTodoStore } from './store'
+import { createSqliteTodoStore } from './store'
 import { createInProcessTodoPort } from './todoPort'
 
 const app = new Hono()
 
 app.use(cors())
 
-app.get('/api/health', (c) => {
-  return c.json({ ok: true }, 200)
-})
-
-// Composition root: build the store, then the domain service on top of it,
-// then mount the HTTP adapter.
-const store = createInMemoryTodoStore()
+// Composition root: open the database, then build the store on top of it, then
+// the domain service, then mount the HTTP adapter.
+const db = openDatabase(process.env.DATABASE_PATH || DEFAULT_DATABASE_PATH)
+const store = createSqliteTodoStore(db)
 const todoService = createTodoService(store)
+
+app.get('/api/health', (c) => {
+  const database = checkDatabase(db)
+
+  return c.json({ ok: database, database }, database ? 200 : 503)
+})
 
 app.route('/api/todo', createTodoApi(todoService))
 
@@ -43,3 +47,21 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export default app
+
+// Release the database file (and flush WAL) when the process is asked to stop.
+let closing = false
+
+function shutdown(signal: NodeJS.Signals): void {
+  if (closing) return
+
+  closing = true
+
+  try {
+    db.close()
+  } finally {
+    process.exit(signal === 'SIGINT' ? 130 : 143)
+  }
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)

@@ -7,6 +7,7 @@ a TypeScript monorepo.
 
 - [Bun](https://bun.sh) — runtime and package manager
 - [Hono](https://hono.dev) — backend API
+- [SQLite](https://bun.sh/docs/api/sqlite) — persistence via Bun's built-in `bun:sqlite`
 - [Vite](https://vitejs.dev) + [React](https://react.dev) — frontend
 - [CopilotKit](https://www.copilotkit.ai) + [Mastra](https://mastra.ai) — Todo agent
 - [AG-UI](https://docs.ag-ui.com) — protocol between the runtime and the agent
@@ -18,9 +19,10 @@ a TypeScript monorepo.
 ```
 .
 ├── client/             # Vite + React SPA + collapsible agent sidebar
-├── server/             # Hono API (in-memory todo store) + composition root
+├── server/             # Hono API (SQLite todo store) + composition root
 ├── ai/                 # Embedded AI edge (CopilotKit runtime + Mastra agent)
 ├── shared/             # Shared TypeScript types, AGENT_IDS, TodoPort
+├── data/               # SQLite database (created at runtime, git-ignored)
 ├── docs/architecture/  # C4 diagrams
 ├── Dockerfile
 └── docker-compose.yml
@@ -34,11 +36,24 @@ a TypeScript monorepo.
 | POST   | `/api/todo`     | Create a todo (`{ title }`)     |
 | PATCH  | `/api/todo/:id` | Set completed (`{ completed }`) |
 | DELETE | `/api/todo/:id` | Delete a todo                   |
-| GET    | `/api/health`   | Health check (`{ ok: true }`)   |
+| GET    | `/api/health`   | Health check (also probes the database) |
 | POST   | `/api/copilotkit` | CopilotKit runtime (single-route) |
 
-Todos are stored in an in-memory `Map` inside the server process and are
-cleared when the process restarts.
+## Storage
+
+Todos are persisted in SQLite through Bun's built-in `bun:sqlite` driver. The
+connection is opened at boot from `DATABASE_PATH` (default `./data/todo.db`),
+the schema is migrated automatically, and the same store backs both the HTTP API
+and the Todo agent. WAL mode is enabled, and the connection is closed on
+`SIGINT`/`SIGTERM` so the write-ahead log is checkpointed.
+
+```bash
+DATABASE_PATH=./data/todo.db   # :memory: for an ephemeral database
+```
+
+`data/` and `*.db*` files are git-ignored. Schema changes are versioned with
+`PRAGMA user_version` in `server/src/db.ts` — append a new migration and bump
+`SCHEMA_VERSION` instead of editing one that has shipped.
 
 ## Todo Agent (AI)
 
@@ -100,7 +115,17 @@ docker compose up --build
 
 The container listens on port 3000 and is not published to the host by default;
 publish it (`ports: "3000:3000"`) or reach it through Portainer / an attached
-proxy network. All environment variables have defaults — see `.env.example`.
+proxy network.
+
+`docker compose` forwards the server-only `LLM_*` variables from `.env` into the
+container (see `.env.example`). Without them the todo UI still works; only the
+agent sidebar fails. `NODE_ENV` and `PORT` are fixed by the compose file, while
+`APP_TAG` and `BUN_IMAGE` are used at build time.
+
+Todos live in the `todo-data` named volume mounted at `/app/data`, so they
+survive image rebuilds and container re-creation. SQLite is a single-writer
+engine: keep this service at one replica and do not place the volume on a
+network filesystem.
 
 ## Architecture
 
