@@ -11,6 +11,12 @@ coverage
 dist
 build
 
+# SQLite database and its write-ahead log (created at runtime)
+data
+*.db
+*.db-wal
+*.db-shm
+
 # misc
 .DS_Store
 .env
