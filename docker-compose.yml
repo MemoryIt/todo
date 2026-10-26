@@ -18,6 +18,18 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
+      # Server-only Langfuse tracing. Empty keys disable tracing while the app
+      # keeps running. The app container must be able to resolve
+      # LANGFUSE_BASE_URL (for example, join the Langfuse compose network).
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-}
+      LANGFUSE_TRACING_ENVIRONMENT: ${LANGFUSE_TRACING_ENVIRONMENT:-}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_REALTIME: ${LANGFUSE_REALTIME:-}
+      LANGFUSE_FLUSH_AT: ${LANGFUSE_FLUSH_AT:-}
+      LANGFUSE_FLUSH_INTERVAL: ${LANGFUSE_FLUSH_INTERVAL:-}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-todo-ai}
     # Todos live in a SQLite file on a named volume, so they survive image
     # rebuilds and container re-creation.
     volumes:

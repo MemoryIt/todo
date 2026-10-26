@@ -10,6 +10,7 @@ a TypeScript monorepo.
 - [SQLite](https://bun.sh/docs/api/sqlite) — persistence via Bun's built-in `bun:sqlite`
 - [Vite](https://vitejs.dev) + [React](https://react.dev) — frontend
 - [CopilotKit](https://www.copilotkit.ai) + [Mastra](https://mastra.ai) — Todo agent
+- [Langfuse](https://langfuse.com) — optional tracing for agent, tool, and model spans
 - [AG-UI](https://docs.ag-ui.com) — protocol between the runtime and the agent
 - [Turbo](https://turbo.build) — monorepo task runner
 - TypeScript types shared between client and server
@@ -85,6 +86,28 @@ LLM_MODEL=deepseek/deepseek-v4-flash
 `server` loads `.env` via `--env-file=../.env`; the LLM key never reaches the
 client bundle.
 
+### Tracing
+
+Langfuse tracing is opt-in and server-only. Set the Langfuse credentials and
+origin in `.env` to export Mastra agent runs, tool calls, model generations, and
+their nested spans:
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=http://langfuse-web:3000
+```
+
+`LANGFUSE_BASE_URL` must be the Langfuse origin, without `/api/public`;
+`LANGFUSE_HOST` is also accepted as a fallback. Because tracing is optional, a
+deployment without these keys keeps running normally.
+
+The exporter uses `OTEL_SERVICE_NAME` (default `todo-ai`) as the service name and
+records the CopilotKit thread id as the Langfuse session. Streaming model chunks
+are excluded to keep trace volume down. Run with `LANGFUSE_REALTIME=true` to
+flush after every event while debugging; production batches spans and flushes
+them through `mastra.shutdown()` on `SIGINT`/`SIGTERM`.
+
 ## Development
 
 ```bash
@@ -117,10 +140,14 @@ The container listens on port 3000 and is not published to the host by default;
 publish it (`ports: "3000:3000"`) or reach it through Portainer / an attached
 proxy network.
 
-`docker compose` forwards the server-only `LLM_*` variables from `.env` into the
-container (see `.env.example`). Without them the todo UI still works; only the
-agent sidebar fails. `NODE_ENV` and `PORT` are fixed by the compose file, while
-`APP_TAG` and `BUN_IMAGE` are used at build time.
+`docker compose` forwards the server-only `LLM_*` and `LANGFUSE_*` variables
+from `.env` into the container (see `.env.example`). Without them the todo UI
+still works; only the agent sidebar fails. `NODE_ENV` and `PORT` are fixed by
+the compose file, while `APP_TAG` and `BUN_IMAGE` are used at build time.
+
+When tracing with a self-hosted Langfuse, make sure the app container can
+resolve the configured `LANGFUSE_BASE_URL`; a Docker service name such as
+`langfuse-web` only resolves when both containers share a network.
 
 Todos live in the `todo-data` named volume mounted at `/app/data`, so they
 survive image rebuilds and container re-creation. SQLite is a single-writer
