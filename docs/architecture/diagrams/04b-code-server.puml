@@ -11,7 +11,18 @@ package "server" {
   }
 
   class store <<module>> {
+    +createSqliteTodoStore(db: Database) : TodoStore
     +createInMemoryTodoStore() : TodoStore
+  }
+
+  class db <<module>> {
+    +DEFAULT_DATABASE_PATH : './data/todo.db'
+    +SCHEMA_VERSION : 1
+    +openDatabase(path?: string) : Database
+    +migrate(db: Database) : number
+    +readSchemaVersion(db: Database) : number
+    +rowToTodo(row: TodoRow) : Todo
+    +checkDatabase(db: Database) : boolean
   }
 
   interface TodoService {
@@ -49,11 +60,15 @@ domain ..> TodoStore : depends on
 domain ..> TodoService : creates
 api --> TodoService : calls
 index --> store : creates
+index --> db : opens
 index --> domain : creates
 index --> api : mounts
+store --> db : maps rows
 
 note bottom of store
-  In-memory Map is private to the store instance. Cleared on restart.
+  SQLite store: prepared select/upsert/delete against the todos table.
+  Ordering: created_at DESC, rowid DESC; created_at is preserved on upsert.
+  Rows are mapped to Todo by rowToTodo (0/1 -> boolean).
   Types from shared (see 04a).
 end note
 
@@ -63,7 +78,8 @@ note bottom of domain
 end note
 
 note bottom of index
-  Composition root: createInMemoryTodoStore() -> createTodoService(store) -> createTodoApi(service).
+  Composition root: openDatabase(DATABASE_PATH) -> createSqliteTodoStore(db) -> createTodoService(store) -> createTodoApi(service).
+  Closes the connection on SIGINT/SIGTERM; /api/health probes the database.
   In production also serves client/dist (deployment concern).
   Bun auto-serves the default export.
 end note

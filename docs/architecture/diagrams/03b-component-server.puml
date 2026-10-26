@@ -7,15 +7,17 @@ Container(client, "client (Todo SPA)", "React 19 SPA", "Calls /api/todo")
 Container_Boundary(s, "server (API & static)") {
   Component(api, "API routes", "Hono handlers (api.ts + health)", "createTodoApi(service); GET/POST /api/todo, PATCH/DELETE /api/todo/:id, GET /api/health; HTTP status codes")
   Component(domain, "Domain", "domain.ts", "validateTitle + validateCompleted; createTodoService(store) -> TodoService (listTodos / createTodo / setCompleted / removeTodo)")
-  Component(store, "In-memory store", "store.ts", "TodoStore interface + createInMemoryTodoStore(); instance-private Map<string, Todo> (cleared on restart)")
+  Component(db, "Database", "db.ts", "openDatabase() (WAL, busy_timeout) + PRAGMA user_version migrations + rowToTodo(); STRICT todos table (id, title, completed 0/1, created_at)")
+  Component(store, "Store", "store.ts", "TodoStore interface + createSqliteTodoStore(db) with prepared statements; createInMemoryTodoStore() kept for tests")
 }
 
 Rel(client, api, "CRUD /api/todo", "HTTP JSON")
 Rel(api, domain, "Uses")
 Rel(domain, store, "Reads from and writes to")
+Rel(store, db, "SQL", "bun:sqlite")
 
 note bottom of s
-  index.ts is the composition root: createInMemoryTodoStore() -> createTodoService(store) -> createTodoApi(service); it mounts routes and in production serves client/dist with SPA fallback (deployment concern).
+  index.ts is the composition root: openDatabase(DATABASE_PATH) -> createSqliteTodoStore(db) -> createTodoService(store) -> createTodoApi(service); it mounts routes, closes the connection on shutdown and in production serves client/dist with SPA fallback (deployment concern).
   shared package provides Todo / TodoList / input types (compile-time only, non-runtime).
 end note
 

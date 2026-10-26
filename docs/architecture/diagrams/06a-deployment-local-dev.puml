@@ -20,6 +20,7 @@ note bottom of devMachine
   turbo runs Vite and bun --watch concurrently.
   shared is built by tsc --watch (compile-time).
   Vite proxies /api to Bun so the browser sees a single origin.
+  Todos are written to ./data/todo.db (DATABASE_PATH), outside the repo history.
 end note
 
 SHOW_LEGEND()

@@ -13,7 +13,7 @@ Container_Boundary(c, "client (Todo SPA)") {
 Container_Boundary(s, "server (API & static)") {
   Component(api, "API routes")
   Component(domain, "Domain")
-  Component(store, "In-memory store")
+  Component(store, "SQLite store")
 }
 
 Rel(user, app, "Opens /", "HTTP")
@@ -31,6 +31,7 @@ note bottom
   Production: server serves index.html + hashed JS/CSS (SPA fallback).
   Development: Vite (:5173) serves modules + HMR and proxies /api to Bun (:3000).
   Shared types are compile-time only.
+  Todos come from the SQLite database (read through bun:sqlite).
 end note
 
 SHOW_LEGEND()

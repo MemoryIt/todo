@@ -12,16 +12,21 @@ Deployment_Node(userDevice, "User's device") {
 
 Deployment_Node(docker, "Docker container", "oven/bun:1.4.2, single Bun process :3000") {
   Container(server, "server (API & static)", "Hono 4 on Bun", "Serves client/dist + /api/todo + /api/health")
+  Deployment_Node(volume, "Named volume todo-data", "mounted at /app/data, owned by bun") {
+    Container(database, "todo.db", "SQLite (WAL)", "Todos, migrated on boot")
+  }
 }
 
 Rel(user, client, "Uses")
 Rel(client, server, "CRUD /api/todo", "HTTP JSON (same-origin)")
+Rel(server, database, "reads/writes", "bun:sqlite")
 
 note right of docker
   client/dist is copied into the image at build time.
   NODE_ENV=production, PORT=3000.
   HEALTHCHECK hits /api/health.
-  In-memory Map is non-persistent (cleared on restart).
+  Todos persist in the todo-data volume (DATABASE_PATH=/app/data/todo.db).
+  SQLite is single-writer: one replica, no network filesystem.
   Multi-stage build details are in Dockerfile (not shown).
 end note
 
