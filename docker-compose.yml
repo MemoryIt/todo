@@ -11,6 +11,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
+      DATABASE_PATH: /app/data/todo.db
+    # Todos live in a SQLite file on a named volume, so they survive image
+    # rebuilds and container re-creation.
+    volumes:
+      - todo-data:/app/data
     # No host port mapping: reach it via Portainer, an attached proxy network,
     # or `docker exec`. Uncomment to publish on the host instead.
     # ports:
@@ -28,3 +33,9 @@ services:
       start_period: 10s
       retries: 3
     restart: unless-stopped
+
+volumes:
+  # SQLite is a single-writer engine: keep this service at one replica and do
+  # not place the volume on a network filesystem. Scale out by moving to a
+  # client/server database instead.
+  todo-data:

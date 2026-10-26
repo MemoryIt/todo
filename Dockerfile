@@ -30,6 +30,7 @@ FROM ${BUN_IMAGE} AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
+    DATABASE_PATH=/app/data/todo.db \
     NPM_CONFIG_REGISTRY=https://registry.npmmirror.com/
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
@@ -37,6 +38,12 @@ COPY --from=build /app/bun.lock ./bun.lock
 COPY --from=build /app/shared ./shared
 COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
+
+# SQLite needs a writable directory, but /app is owned by root. Create the
+# parent of DATABASE_PATH and hand it to the unprivileged user; a volume
+# mounted here inherits these permissions when Docker seeds it.
+RUN mkdir -p /app/data && chown bun:bun /app/data
+
 USER bun
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
