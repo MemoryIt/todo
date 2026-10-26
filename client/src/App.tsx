@@ -1,29 +1,15 @@
 import { useMemo, useState } from 'react'
-import type { TodoList } from 'shared'
 import { useTodos } from './useTodos'
 import { Composer, Filter, Stats } from './TodoControls'
-import type { FilterValue } from './TodoControls'
+import type { FilterValue } from './features/todo/model'
+import {
+  countActiveTodos,
+  emptyMessages,
+  filterTodos,
+} from './features/todo/model'
 import { List } from './TodoList'
 import { TodoSidebar } from './copilot/TodoSidebar'
 import './App.css'
-
-const emptyMessages: Record<FilterValue, string> = {
-  all: 'No todos yet. Add your first one above.',
-  active: 'No active todos. Nice work!',
-  completed: 'No completed todos yet.',
-}
-
-function filterTodos(todos: TodoList, filter: FilterValue): TodoList {
-  if (filter === 'active') {
-    return todos.filter((todo) => !todo.completed)
-  }
-
-  if (filter === 'completed') {
-    return todos.filter((todo) => todo.completed)
-  }
-
-  return todos
-}
 
 function App() {
   const { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo, refetch } =
@@ -36,7 +22,7 @@ function App() {
   )
 
   const activeCount = useMemo(
-    () => todos.filter((todo) => !todo.completed).length,
+    () => countActiveTodos(todos),
     [todos],
   )
 
