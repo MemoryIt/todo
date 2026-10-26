@@ -31,7 +31,8 @@ app.route('/api/todo', createTodoApi(todoService))
 // in-process TodoPort. It can later be served from its own entry point without
 // changing the business code.
 const todoPort = createInProcessTodoPort(todoService)
-app.route('/', createAiApp({ todoPort }))
+const ai = createAiApp({ todoPort })
+app.route('/', ai.app)
 
 // Unknown API routes must not fall through to the SPA.
 app.all('/api/*', (c) => c.json({ error: 'Not Found' }, 404))
@@ -49,17 +50,24 @@ if (process.env.NODE_ENV === 'production') {
 export default app
 
 // Release the database file (and flush WAL) when the process is asked to stop.
+// The AI edge is shut down first so batched observability spans reach Langfuse.
 let closing = false
 
-function shutdown(signal: NodeJS.Signals): void {
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
   if (closing) return
 
   closing = true
 
   try {
-    db.close()
+    await ai.shutdown()
+  } catch (error) {
+    console.error('Failed to shut down the AI edge', error)
   } finally {
-    process.exit(signal === 'SIGINT' ? 130 : 143)
+    try {
+      db.close()
+    } finally {
+      process.exit(signal === 'SIGINT' ? 130 : 143)
+    }
   }
 }
 

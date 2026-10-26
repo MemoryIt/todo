@@ -38,6 +38,11 @@ async function readAgUiThreadId(
   return undefined
 }
 
+export type AiRuntime = {
+  runtime: CopilotRuntime
+  shutdown: () => Promise<void>
+}
+
 /**
  * CopilotKit runtime backed by the Mastra agents via the AG-UI bridge.
  *
@@ -45,12 +50,12 @@ async function readAgUiThreadId(
  * never prevents the surrounding server from booting. The agents factory is
  * called per request, mirroring `getLocalAgents`.
  */
-export function createRuntime(todoPort: TodoPort): CopilotRuntime {
+export function createRuntime(todoPort: TodoPort): AiRuntime {
   let mastra: ReturnType<typeof createMastra> | undefined
 
   const getMastra = () => (mastra ??= createMastra(todoPort))
 
-  return new CopilotRuntime({
+  const runtime = new CopilotRuntime({
     agents: async ({ request }) => {
       const sessionId = await readAgUiThreadId(request)
 
@@ -67,4 +72,13 @@ export function createRuntime(todoPort: TodoPort): CopilotRuntime {
       }
     },
   })
+
+  return {
+    runtime,
+    // Mastra owns the tracing registry; shutting it down flushes batched
+    // Langfuse spans before the process exits.
+    shutdown: async () => {
+      await mastra?.shutdown()
+    },
+  }
 }

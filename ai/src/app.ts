@@ -5,6 +5,11 @@ import { createRuntime } from "./runtime"
 
 export const COPILOT_BASE_PATH = "/api/copilotkit"
 
+export type AiApp = {
+  app: Hono
+  shutdown: () => Promise<void>
+}
+
 /**
  * Hono app for the AI edge.
  *
@@ -16,17 +21,18 @@ export const COPILOT_BASE_PATH = "/api/copilotkit"
  * an HTTP surface, it can later be served from its own entry point without
  * touching the business code.
  */
-export function createAiApp({ todoPort }: { todoPort: TodoPort }): Hono {
+export function createAiApp({ todoPort }: { todoPort: TodoPort }): AiApp {
+  const { runtime, shutdown } = createRuntime(todoPort)
   const app = new Hono()
 
   app.route(
     "/",
     createCopilotHonoHandler({
-      runtime: createRuntime(todoPort),
+      runtime,
       basePath: COPILOT_BASE_PATH,
       mode: "single-route",
     }),
   )
 
-  return app
+  return { app, shutdown }
 }
