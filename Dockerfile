@@ -41,8 +41,8 @@ COPY --from=build /app/bun.lock ./bun.lock
 # exist here as well; otherwise Bun fails with
 # `ENOENT reading "/app/node_modules/@todo/ai"` on startup.
 COPY --from=build /app/shared ./shared
-COPY --from=build /app/server ./server
 COPY --from=build /app/ai ./ai
+COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
 
 # SQLite needs a writable directory, but /app is owned by root. Create the
