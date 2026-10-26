@@ -5,8 +5,10 @@ title Dynamic - Todo CRUD (representative paths) @ v0.0.1
 Person(user, "End user")
 
 Container_Boundary(c, "client (Todo SPA)") {
-  Component(ui, "UI components")
-  Component(model, "Model / API")
+  Component(ui, "TodoView", "features/todo/TodoView.tsx")
+  Component(provider, "TodoProvider", "features/todo/TodoProvider.tsx")
+  Component(model, "Model / API", "useTodos.ts + api.ts")
+  Component(agent, "TodoAgentSidebar", "features/agent/TodoAgentSidebar.tsx")
 }
 
 Container_Boundary(s, "server (API & static)") {
@@ -16,20 +18,28 @@ Container_Boundary(s, "server (API & static)") {
 }
 
 Rel(user, ui, "Submits new todo")
-Rel(ui, model, "addTodo(title)")
+Rel(ui, provider, "addTodo(title)")
+Rel(provider, model, "useTodos.addTodo")
 Rel(model, api, "POST /api/todo {title}", "HTTP JSON")
 Rel(api, domain, "validateTitle + createTodo")
 Rel(domain, store, "save()")
 Rel(store, domain, "Todo")
 Rel(domain, api, "returns Todo")
 Rel(api, model, "201 Todo")
-Rel(model, ui, "prepend to list")
+Rel(model, provider, "updates state")
+Rel(provider, ui, "context update")
+Rel(agent, provider, "useTodoRefresh after run")
 
 note right of api
   Similar path for PATCH /api/todo/:id -> 200
   and DELETE /api/todo/:id -> 204.
   title (POST) and completed (PATCH) are validated in the domain; failure -> 400; missing id -> 404.
   Filtering (all/active/completed) is client-side only.
+end note
+
+note bottom of agent
+  Agent tools mutate todos server-side through TodoPort, outside React state.
+  When a run ends, TodoAgentSidebar calls the Todo feature's refresh contract.
 end note
 
 SHOW_LEGEND()

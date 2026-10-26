@@ -6,8 +6,9 @@ Person(user, "End user")
 
 Container_Boundary(c, "client (Todo SPA)") {
   Component(app, "App", "App.tsx")
-  Component(model, "Model / API", "api.ts + useTodos.ts")
-  Component(ui, "UI components")
+  Component(provider, "TodoProvider", "features/todo/TodoProvider.tsx")
+  Component(model, "Model / API", "useTodos.ts + api.ts")
+  Component(ui, "TodoView", "features/todo/TodoView.tsx")
 }
 
 Container_Boundary(s, "server (API & static)") {
@@ -17,15 +18,17 @@ Container_Boundary(s, "server (API & static)") {
 }
 
 Rel(user, app, "Opens /", "HTTP")
-Rel(app, model, "useTodos loads")
+Rel(app, provider, "Mounts")
+Rel(provider, model, "useTodos loads")
 Rel(model, api, "GET /api/todo", "HTTP JSON")
 Rel(api, domain, "listTodos()")
 Rel(domain, store, "findAll()")
 Rel(store, domain, "TodoList")
 Rel(domain, api, "returns todos")
 Rel(api, model, "200 { todos }")
-Rel(model, app, "set state")
-Rel(app, ui, "renders list or empty")
+Rel(model, provider, "set state")
+Rel(provider, ui, "context")
+Rel(ui, user, "renders list or empty")
 
 note bottom
   Production: server serves index.html + hashed JS/CSS (SPA fallback).

@@ -3,32 +3,71 @@ title Code - client @ v0.0.1
 skinparam classAttributeIconSize 0
 
 package "client" {
-  class api <<module>> {
-    -request(path: string, init?) : Promise<T>
-    +fetchTodos() : Promise<TodoList>
-    +createTodo(input: CreateTodoInput) : Promise<Todo>
-    +updateTodo(id: string, input: UpdateTodoInput) : Promise<Todo>
-    +deleteTodo(id: string) : Promise<void>
+  package "features/todo" {
+    class api <<module>> {
+      -request(path: string, init?) : Promise<T>
+      +fetchTodos() : Promise<TodoList>
+      +createTodo(input: CreateTodoInput) : Promise<Todo>
+      +updateTodo(id: string, input: UpdateTodoInput) : Promise<Todo>
+      +deleteTodo(id: string) : Promise<void>
+    }
+
+    class useTodos <<hook>> {
+      -todos : TodoList
+      -loading : boolean
+      -error : string | undefined
+      -pendingIds : Set<string>
+      +addTodo(title: string) : Promise<Todo | undefined>
+      +toggleTodo(id: string, completed: boolean) : Promise<Todo | undefined>
+      +removeTodo(id: string) : Promise<boolean>
+      +refetch() : Promise<TodoList | undefined>
+    }
+
+    class TodoProvider <<component>> {
+      +useTodos()
+      +provides TodoState / TodoActions / TodoRefresh
+    }
+
+    class useTodo <<hook>> {
+      +useTodoState() : TodoState
+      +useTodoActions() : TodoActions
+      +useTodoRefresh() : TodoRefresh
+    }
+
+    class TodoView <<component>> {
+      -filter : FilterValue
+      +renders Composer / Filter / Stats / TodoList
+    }
+
+    class model <<module>> {
+      +filterTodos(todos, filter) : TodoList
+      +countActiveTodos(todos) : number
+      +emptyMessages : Record<FilterValue, string>
+    }
   }
 
-  class useTodos <<hook>> {
-    -todos : TodoList
-    -loading : boolean
-    -error : string | undefined
-    -pendingIds : Set<string>
-    +addTodo(title: string) : Promise<Todo | undefined>
-    +toggleTodo(id: string, completed: boolean) : Promise<Todo | undefined>
-    +removeTodo(id: string) : Promise<boolean>
+  package "features/agent" {
+    class TodoAgentSidebar <<component>> {
+      +useTodoRefresh()
+      +renders CopilotSidebar
+    }
   }
 
   class App <<component>> {
-    -filter : 'all' | 'active' | 'completed'
-    +renders Composer / Filter / List / Item / Stats
+    +mounts TodoProvider
+    +renders TodoView + TodoAgentSidebar
   }
 }
 
+TodoProvider --> useTodos : calls
+TodoView --> useTodo : reads state/actions
+TodoView --> model : derives
 useTodos --> api : calls
-App --> useTodos : uses
+TodoAgentSidebar --> useTodo : refresh after run
+useTodo ..> TodoProvider : reads contexts
+App --> TodoProvider : mounts
+App --> TodoView : renders
+App --> TodoAgentSidebar : renders
 
 note bottom of api
   Pure HTTP transport to /api/todo. request() parses JSON and returns void on 204.
@@ -40,9 +79,19 @@ note bottom of useTodos
   server confirms and mark the affected id pending meanwhile.
 end note
 
+note bottom of TodoProvider
+  Owns the single useTodos() instance and splits state, actions and refresh into
+  separate contexts. TodoView and the agent sidebar consume only what they need.
+end note
+
+note bottom of TodoView
+  Bootstrapped by index.html + main.tsx through App. Owns the local filter state
+  and passes pendingIds to TodoList; Item disables its controls while pending.
+end note
+
 note bottom of App
-  Bootstrapped by index.html + main.tsx.
-  Passes pendingIds to List; Item disables its controls while pending.
+  Composition root only: layout, TodoProvider and the two feature entry points.
+  It does not know about Todo data, filtering or agent refresh mechanics.
 end note
 
 @enduml

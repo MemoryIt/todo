@@ -6,15 +6,16 @@ Person(user, "End user")
 Container(server, "server (API & static)", "Hono 4 on Bun", "Provides /api/todo and serves static files in production")
 
 Container_Boundary(c, "client (Todo SPA)") {
-  Component(app, "App", "App.tsx", "Root component: layout, filter state, composes UI. Bootstrapped by index.html + main.tsx")
-  Component(model, "Model / API", "api.ts + useTodos.ts", "Todo CRUD client + local state management")
-  Component(ui, "UI components", "Composer / Filter / List / Item / Stats", "Presentational components")
+  Component(app, "App", "App.tsx", "Composition root: page shell + TodoProvider; composes TodoView and TodoAgentSidebar")
+  Component(todo, "Todo feature", "features/todo", "TodoProvider + TodoView + model/data/components; owns todo state, filtering and UI")
+  Component(agent, "Agent feature", "features/agent", "CopilotKit provider, error boundary and collapsible sidebar; refreshes todos after runs")
 }
 
 Rel(user, c, "Uses")
-Rel(app, model, "Uses")
-Rel(app, ui, "Composes")
-Rel(model, server, "fetch /api/todo", "HTTP JSON")
+Rel(app, todo, "Renders / provides")
+Rel(app, agent, "Renders")
+Rel(agent, todo, "Refreshes after agent run")
+Rel(todo, server, "fetch /api/todo", "HTTP JSON")
 
 SHOW_LEGEND()
 @enduml
