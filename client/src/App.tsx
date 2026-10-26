@@ -1,52 +1,14 @@
-import { useMemo, useState } from 'react'
-import { useTodos } from './features/todo/useTodos'
-import { Composer } from './features/todo/components/Composer'
-import { Filter } from './features/todo/components/Filter'
-import { Stats } from './features/todo/components/Stats'
-import { TodoList } from './features/todo/components/TodoList'
-import type { FilterValue } from './features/todo/model'
-import {
-  countActiveTodos,
-  emptyMessages,
-  filterTodos,
-} from './features/todo/model'
+import { TodoProvider, TodoView } from './features/todo'
 import { TodoSidebar } from './copilot/TodoSidebar'
 import './App.css'
 
 function App() {
-  const { todos, loading, error, pendingIds, addTodo, toggleTodo, removeTodo, refetch } =
-    useTodos()
-  const [filter, setFilter] = useState<FilterValue>('all')
-
-  const visibleTodos = useMemo(
-    () => filterTodos(todos, filter),
-    [todos, filter],
-  )
-
-  const activeCount = useMemo(
-    () => countActiveTodos(todos),
-    [todos],
-  )
-
   return (
     <main className="todo-page">
-      <h1>Todo</h1>
-      <Composer onAdd={addTodo} />
-      <Stats activeCount={activeCount} />
-      <Filter value={filter} onChange={setFilter} />
-      {loading ? (
-        <p className="loading">Loading todos...</p>
-      ) : (
-        <TodoList
-          todos={visibleTodos}
-          emptyMessage={emptyMessages[filter]}
-          pendingIds={pendingIds}
-          onToggle={toggleTodo}
-          onDelete={removeTodo}
-        />
-      )}
-      {error && <p className="error">Request failed: {error}</p>}
-      <TodoSidebar onChanged={refetch} />
+      <TodoProvider>
+        <TodoView />
+        <TodoSidebar />
+      </TodoProvider>
     </main>
   )
 }

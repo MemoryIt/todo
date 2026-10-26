@@ -1,17 +1,14 @@
 import { CopilotSidebar } from "@copilotkit/react-core/v2"
 import "@copilotkit/react-core/v2/styles.css"
 import { AGENT_IDS } from "shared"
+import { useTodoRefresh } from "../features/todo"
 import { CopilotProvider } from "./CopilotProvider"
 import { ErrorBoundary } from "./ErrorBoundary"
 import { useRefreshOnRunEnd } from "./useRefreshOnRunEnd"
 
-type TodoSidebarProps = {
-  /** Called after an agent run finishes so the todo list can be refreshed. */
-  onChanged: () => void
-}
-
-function Sidebar({ onChanged }: TodoSidebarProps) {
-  useRefreshOnRunEnd(AGENT_IDS.todo, onChanged)
+function Sidebar() {
+  const refresh = useTodoRefresh()
+  useRefreshOnRunEnd(AGENT_IDS.todo, refresh)
 
   // Collapsed by default; the built-in toggle button on the right opens it.
   return <CopilotSidebar defaultOpen={false} position="right" />
@@ -23,11 +20,11 @@ function Sidebar({ onChanged }: TodoSidebarProps) {
  * The manual todo UI lives outside this provider, so a missing/misconfigured
  * LLM or a runtime failure only breaks the sidebar.
  */
-export function TodoSidebar({ onChanged }: TodoSidebarProps) {
+export function TodoSidebar() {
   return (
     <ErrorBoundary>
       <CopilotProvider agentId={AGENT_IDS.todo}>
-        <Sidebar onChanged={onChanged} />
+        <Sidebar />
       </CopilotProvider>
     </ErrorBoundary>
   )
