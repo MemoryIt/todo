@@ -23,6 +23,8 @@
     "@copilotkit/runtime": "1.79.1",
     "@mastra/client-js": "1.56.0",
     "@mastra/core": "1.79.0",
+    "@mastra/langfuse": "1.6.2",
+    "@mastra/observability": "1.21.0",
     "hono": "4.13.7",
     "shared": "workspace:*",
     "zod": "3.25.76"
