@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useTodos } from './features/todo/useTodos'
-import { Composer, Filter, Stats } from './TodoControls'
+import { Composer } from './features/todo/components/Composer'
+import { Filter } from './features/todo/components/Filter'
+import { Stats } from './features/todo/components/Stats'
+import { TodoList } from './features/todo/components/TodoList'
 import type { FilterValue } from './features/todo/model'
 import {
   countActiveTodos,
   emptyMessages,
   filterTodos,
 } from './features/todo/model'
-import { List } from './TodoList'
 import { TodoSidebar } from './copilot/TodoSidebar'
 import './App.css'
 
@@ -35,7 +37,7 @@ function App() {
       {loading ? (
         <p className="loading">Loading todos...</p>
       ) : (
-        <List
+        <TodoList
           todos={visibleTodos}
           emptyMessage={emptyMessages[filter]}
           pendingIds={pendingIds}

@@ -1,4 +1,4 @@
-import type { Todo, TodoList } from 'shared'
+import type { Todo, TodoList as TodoListModel } from 'shared'
 
 type ItemProps = {
   todo: Todo
@@ -32,21 +32,21 @@ function Item({ todo, pending, onToggle, onDelete }: ItemProps) {
   )
 }
 
-type ListProps = {
-  todos: TodoList
+type TodoListProps = {
+  todos: TodoListModel
   emptyMessage: string
   pendingIds: Set<string>
   onToggle: (id: string, completed: boolean) => void
   onDelete: (id: string) => void
 }
 
-export function List({
+export function TodoList({
   todos,
   emptyMessage,
   pendingIds,
   onToggle,
   onDelete,
-}: ListProps) {
+}: TodoListProps) {
   if (todos.length === 0) {
     return <p className="empty">{emptyMessage}</p>
   }
