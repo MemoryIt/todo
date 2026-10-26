@@ -1,2 +1,3 @@
-export { TodoProvider, useTodoRefresh } from './TodoProvider'
+export { TodoProvider } from './TodoProvider'
+export { useTodoRefresh } from './useTodo'
 export { TodoView } from './TodoView'

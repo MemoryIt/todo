@@ -4,7 +4,7 @@ import { Composer } from './components/Composer'
 import { Filter } from './components/Filter'
 import { Stats } from './components/Stats'
 import { TodoList } from './components/TodoList'
-import { useTodoActions, useTodoState } from './TodoProvider'
+import { useTodoActions, useTodoState } from './useTodo'
 import type { FilterValue } from './model'
 import {
   countActiveTodos,
