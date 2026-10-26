@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
+import "./agent.css"
 
 type ErrorBoundaryProps = {
   children: ReactNode

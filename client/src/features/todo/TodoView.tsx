@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import './todo.css'
 import { Composer } from './components/Composer'
 import { Filter } from './components/Filter'
 import { Stats } from './components/Stats'
