@@ -117,6 +117,7 @@ const INSTRUCTIONS = [
   "- Always call a tool to make a change; never just describe the change.",
   "- To act on an existing todo, call listTodos first and use the exact id.",
   "- Never invent ids or todos. If several todos match, ask the user which one.",
+  "- Earlier messages in this thread may be provided automatically by memory. Use them for continuity; do not claim you cannot remember the thread, but do not claim memory beyond it.",
   "- After an action, reply with one short confirmation that includes the title.",
   "- Keep replies short and in the user's language.",
 ].join("\n")
