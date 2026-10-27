@@ -15,7 +15,8 @@ Rel(client, server, "CRUD todos", "HTTP JSON /api/todo")
 note bottom of b
   shared package provides TypeScript types only (compile-time dependency, not a runtime container).
   Todos are persisted in a SQLite file inside the server container (DATABASE_PATH, default ./data/todo.db), migrated on boot.
-  The HTTP API and the embedded AI edge share the same store.
+  The embedded AI edge keeps Mastra conversation memory in a separate SQLite file (MEMORY_DATABASE_PATH, default ./data/memory.db), created on first agent run.
+  The HTTP API and the embedded AI edge share the same todo store; Mastra memory uses its own tables.
   In production the server also serves the built SPA static files (client/dist) with SPA fallback (same-origin).
 end note
 

@@ -12,6 +12,9 @@ services:
       NODE_ENV: production
       PORT: "3000"
       DATABASE_PATH: /app/data/todo.db
+      # Mastra conversation memory lives in its own SQLite file on the same
+      # data volume. The AI edge creates it lazily on the first agent run.
+      MEMORY_DATABASE_PATH: ${MEMORY_DATABASE_PATH:-/app/data/memory.db}
       # Server-only LLM configuration for the embedded AI edge. Compose reads
       # these from .env and forwards them into the container; the manual todo UI
       # keeps working when they are empty. LLM_BASE_URL must include /v1.
@@ -30,8 +33,8 @@ services:
       LANGFUSE_FLUSH_AT: ${LANGFUSE_FLUSH_AT:-}
       LANGFUSE_FLUSH_INTERVAL: ${LANGFUSE_FLUSH_INTERVAL:-}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-todo-ai}
-    # Todos live in a SQLite file on a named volume, so they survive image
-    # rebuilds and container re-creation.
+    # Todos and Mastra memory live in SQLite files on a named volume, so they
+    # survive image rebuilds and container re-creation.
     volumes:
       - todo-data:/app/data
     # No host port mapping: reach it via Portainer, an attached proxy network,

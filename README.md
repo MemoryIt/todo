@@ -23,7 +23,7 @@ a TypeScript monorepo.
 ├── server/             # Hono API (SQLite todo store) + composition root
 ├── ai/                 # Embedded AI edge (CopilotKit runtime + Mastra agent)
 ├── shared/             # Shared TypeScript types, AGENT_IDS, TodoPort
-├── data/               # SQLite database (created at runtime, git-ignored)
+├── data/               # SQLite databases (created at runtime, git-ignored)
 ├── docs/architecture/  # C4 diagrams
 ├── Dockerfile
 └── docker-compose.yml
@@ -56,6 +56,15 @@ DATABASE_PATH=./data/todo.db   # :memory: for an ephemeral database
 `PRAGMA user_version` in `server/src/db.ts` — append a new migration and bump
 `SCHEMA_VERSION` instead of editing one that has shipped.
 
+Mastra agent memory is stored separately in `data/memory.db`, configurable with
+`MEMORY_DATABASE_PATH` (default `./data/memory.db`). The AI edge creates the
+file and its parent directory on first use, and keeps each AG-UI thread's
+conversation history in Mastra's `mastra_threads` / `mastra_messages` tables.
+Semantic recall stays disabled because the model endpoint does not expose an
+embedding model; only recent messages from the current thread are sent back to
+the model (bounded by a token budget). In Docker, the memory file lives on the
+same `todo-data` volume and is closed during graceful shutdown.
+
 ## Todo Agent (AI)
 
 The AI edge lives in `ai/` and is embedded into the server process. It exposes
@@ -69,6 +78,11 @@ the existing domain service through an in-process `TodoPort`:
 | `addTodo` | Add a todo by title |
 | `toggleTodo` | Mark completed / cancel completion by id |
 | `removeTodo` | Delete by id |
+
+Conversation history is persisted by Mastra Memory in SQLite, so later turns in
+the same AG-UI thread see the earlier messages without the browser resending
+them. The history is scoped to the thread; starting a new thread starts a new
+conversation.
 
 The frontend has no tools: it only renders the official collapsible
 `CopilotSidebar`. Because the agent mutates data outside React state, the

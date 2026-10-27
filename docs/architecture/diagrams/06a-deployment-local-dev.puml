@@ -21,6 +21,7 @@ note bottom of devMachine
   shared is built by tsc --watch (compile-time).
   Vite proxies /api to Bun so the browser sees a single origin.
   Todos are written to ./data/todo.db (DATABASE_PATH), outside the repo history.
+  Mastra conversation memory is written to ./data/memory.db (MEMORY_DATABASE_PATH).
 end note
 
 SHOW_LEGEND()
