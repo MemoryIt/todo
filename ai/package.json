@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@ag-ui/client": "1.0.2",
@@ -24,6 +25,8 @@
     "@mastra/client-js": "1.56.0",
     "@mastra/core": "1.79.0",
     "@mastra/langfuse": "1.6.2",
+    "@mastra/libsql": "1.27.0",
+    "@mastra/memory": "1.39.0",
     "@mastra/observability": "1.21.0",
     "hono": "4.13.7",
     "shared": "workspace:*",

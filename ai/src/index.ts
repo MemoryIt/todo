@@ -1,3 +1,5 @@
 export { createAiApp, COPILOT_BASE_PATH } from "./app"
 export type { AiApp } from "./app"
 export { createAgentFactories, createMastra } from "./mastra"
+export { createAiMemory, DEFAULT_MEMORY_DATABASE_PATH } from "./memory"
+export type { AiMemory } from "./memory"

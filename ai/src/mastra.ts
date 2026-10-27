@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core"
 import { AGENT_IDS } from "shared"
 import type { TodoPort } from "shared"
 import { createTodoAgent, TODO_AGENT_ID } from "./agents/todo"
+import type { AiMemory } from "./memory"
 import { createObservability } from "./observability"
 
 export type AgentFactory = () => ReturnType<typeof createTodoAgent>
@@ -14,9 +15,10 @@ export type AgentFactory = () => ReturnType<typeof createTodoAgent>
  */
 export function createAgentFactories(
   todoPort: TodoPort,
+  aiMemory: AiMemory,
 ): Record<string, AgentFactory> {
   return {
-    [TODO_AGENT_ID]: () => createTodoAgent(todoPort),
+    [TODO_AGENT_ID]: () => createTodoAgent(todoPort, aiMemory.memory),
   }
 }
 
@@ -29,8 +31,8 @@ const knownAgentIds = new Set<string>(Object.values(AGENT_IDS))
  * static hosting) even when the LLM_* variables are missing; the error only
  * surfaces when an agent is actually requested.
  */
-export function createMastra(todoPort: TodoPort): Mastra {
-  const factories = createAgentFactories(todoPort)
+export function createMastra(todoPort: TodoPort, aiMemory: AiMemory): Mastra {
+  const factories = createAgentFactories(todoPort, aiMemory)
   const ids = Object.keys(factories)
 
   for (const id of ids) {
@@ -45,6 +47,9 @@ export function createMastra(todoPort: TodoPort): Mastra {
 
   return new Mastra({
     agents: Object.fromEntries(ids.map((id) => [id, factories[id]!()])),
+    // Registering the store at the Mastra level keeps Mastra from falling back
+    // to its in-memory default; the agent memory above uses the same instance.
+    storage: aiMemory.storage,
     ...(observability ? { observability } : {}),
   })
 }
