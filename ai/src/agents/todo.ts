@@ -1,9 +1,9 @@
 import { Agent } from "@mastra/core/agent"
 import { createTool } from "@mastra/core/tools"
-import type { Memory } from "@mastra/memory"
 import { z } from "zod"
 import { AGENT_IDS } from "shared"
 import type { Todo, TodoList, TodoPort } from "shared"
+import { createAgentMemory } from "../memory"
 import { createLlmModel } from "../model"
 
 export const TODO_AGENT_ID = AGENT_IDS.todo
@@ -128,12 +128,12 @@ const INSTRUCTIONS = [
  * All tools run server-side and delegate to {@link TodoPort}, so the agent never
  * depends on browser state and can work without a connected frontend.
  */
-export function createTodoAgent(todoPort: TodoPort, memory: Memory): Agent {
+export function createTodoAgent(todoPort: TodoPort): Agent {
   return new Agent({
     id: TODO_AGENT_ID,
     name: "Todo Agent",
     model: createLlmModel(),
-    memory,
+    memory: createAgentMemory(),
     tools: createTodoTools(todoPort),
     instructions: INSTRUCTIONS,
   })

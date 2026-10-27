@@ -2,7 +2,6 @@ import { MastraAgent } from "@ag-ui/mastra"
 import { CopilotRuntime } from "@copilotkit/runtime/v2"
 import type { TodoPort } from "shared"
 import { createMastra } from "./mastra"
-import { createAiMemory, type AiMemory } from "./memory"
 import { TODO_AGENT_ID } from "./agents/todo"
 
 /**
@@ -52,31 +51,15 @@ export type AiRuntime = {
  * called per request, mirroring `getLocalAgents`.
  */
 export function createRuntime(todoPort: TodoPort): AiRuntime {
-  let mastraPromise: Promise<ReturnType<typeof createMastra>> | undefined
-  let aiMemory: AiMemory | undefined
+  let mastraPromise: ReturnType<typeof createMastra> | undefined
 
-  const createMastraInstance = async (): Promise<
-    ReturnType<typeof createMastra>
-  > => {
-    const memory = createAiMemory()
-
-    try {
-      const mastra = createMastra(todoPort, memory)
-      aiMemory = memory
-      return mastra
-    } catch (error) {
-      await memory.close()
-      throw error
-    }
-  }
-
-  // Create the store only when an agent is actually requested, so a missing
-  // LLM configuration still leaves the rest of the server bootable. The shared
+  // Create Mastra only when an agent is actually requested, so a missing LLM
+  // configuration still leaves the rest of the server bootable. The shared
   // promise prevents concurrent requests from opening the database twice, and
   // a failure clears it so a later request can retry initialization.
   const getMastra = () => {
     if (!mastraPromise) {
-      mastraPromise = createMastraInstance().catch((error) => {
+      mastraPromise = createMastra(todoPort).catch((error) => {
         mastraPromise = undefined
         throw error
       })
@@ -93,6 +76,9 @@ export function createRuntime(todoPort: TodoPort): AiRuntime {
       return {
         [TODO_AGENT_ID]: new MastraAgent({
           agent: mastra.getAgent(TODO_AGENT_ID),
+          // Single-user deployment: the agent id doubles as the stable resource
+          // id. Replace it with an authenticated user id if multi-user support
+          // is added.
           resourceId: TODO_AGENT_ID,
           // Langfuse derives its session from this metadata. A MastraAgent is
           // created per request, so the ids never leak across conversations.
@@ -106,17 +92,11 @@ export function createRuntime(todoPort: TodoPort): AiRuntime {
 
   return {
     runtime,
-    // Mastra owns the tracing registry and the storage it was given. Shutting
-    // it down flushes batched Langfuse spans and closes the memory database;
-    // the explicit close is a safety net for a failed initialization.
+    // Mastra owns the tracing registry and the memory storage. Shutting it down
+    // flushes batched Langfuse spans and closes the SQLite connection.
     shutdown: async () => {
       const mastra = await mastraPromise?.catch(() => undefined)
-
-      try {
-        await mastra?.shutdown()
-      } finally {
-        await aiMemory?.close()
-      }
+      await mastra?.shutdown()
     },
   }
 }
