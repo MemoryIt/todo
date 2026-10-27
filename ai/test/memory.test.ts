@@ -1,12 +1,28 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test"
 import { existsSync, mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import type { MastraDBMessage } from "@mastra/core/agent"
-import { createAiMemory, type AiMemory } from "../src/memory"
+import type { TodoPort } from "shared"
+import { TODO_AGENT_ID } from "../src/agents/todo"
+import { createMastra } from "../src/mastra"
+import { MAX_MESSAGE_HISTORY_TOKENS } from "../src/memory"
+
+const originalEnv = {
+  LLM_BASE_URL: process.env.LLM_BASE_URL,
+  LLM_API_KEY: process.env.LLM_API_KEY,
+  LLM_MODEL: process.env.LLM_MODEL,
+  MEMORY_DATABASE_PATH: process.env.MEMORY_DATABASE_PATH,
+}
 
 const tempDirs: string[] = []
-const openMemories: AiMemory[] = []
+
+const todoPort: TodoPort = {
+  list: async () => [],
+  create: async () => undefined,
+  setCompleted: async () => undefined,
+  remove: async () => false,
+}
 
 function tempDbPath(): string {
   const dir = mkdtempSync(join(tmpdir(), "todo-ai-memory-"))
@@ -41,9 +57,29 @@ function textMessage({
   }
 }
 
-afterEach(async () => {
-  while (openMemories.length > 0) {
-    await openMemories.pop()!.close()
+beforeAll(() => {
+  // Agent construction reads the LLM configuration, but these tests never call
+  // the model.
+  process.env.LLM_BASE_URL = "http://127.0.0.1:1/v1"
+  process.env.LLM_API_KEY = "test-key"
+  process.env.LLM_MODEL = "test-model"
+})
+
+afterAll(() => {
+  for (const [name, value] of Object.entries(originalEnv)) {
+    if (value === undefined) {
+      delete process.env[name]
+    } else {
+      process.env[name] = value
+    }
+  }
+})
+
+afterEach(() => {
+  if (originalEnv.MEMORY_DATABASE_PATH === undefined) {
+    delete process.env.MEMORY_DATABASE_PATH
+  } else {
+    process.env.MEMORY_DATABASE_PATH = originalEnv.MEMORY_DATABASE_PATH
   }
 
   while (tempDirs.length > 0) {
@@ -51,106 +87,129 @@ afterEach(async () => {
   }
 })
 
-describe("createAiMemory", () => {
-  it("creates missing parent directories for the SQLite file", () => {
+describe("Mastra-managed memory storage", () => {
+  it("creates the SQLite parent directory and injects storage into agent memory", async () => {
     const path = tempDbPath()
+    process.env.MEMORY_DATABASE_PATH = path
 
     expect(existsSync(dirname(path))).toBe(false)
 
-    const aiMemory = createAiMemory(path)
-    openMemories.push(aiMemory)
+    const mastra = await createMastra(todoPort)
 
-    expect(existsSync(dirname(path))).toBe(true)
-    expect(existsSync(path)).toBe(true)
+    try {
+      expect(existsSync(dirname(path))).toBe(true)
+
+      const memory = await mastra.getAgent(TODO_AGENT_ID).getMemory()
+
+      expect(memory).toBeDefined()
+      expect(memory?.getMergedThreadConfig().messageHistory?.maxTokens).toBe(
+        MAX_MESSAGE_HISTORY_TOKENS,
+      )
+      expect(() => memory?.storage).not.toThrow()
+    } finally {
+      await mastra.shutdown()
+    }
   })
 
-  it("persists each thread's history across memory instances", async () => {
+  it("persists each thread's history across Mastra instances", async () => {
     const path = tempDbPath()
     const resourceId = "user-1"
+    process.env.MEMORY_DATABASE_PATH = path
 
-    const first = createAiMemory(path)
-    openMemories.push(first)
+    const first = await createMastra(todoPort)
 
-    await first.memory.saveThread({
-      thread: {
-        id: "thread-1",
-        resourceId,
-        title: "First thread",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    })
-    await first.memory.saveMessages({
-      messages: [
-        textMessage({
-          id: "message-1",
-          role: "user",
-          text: "My name is Alice",
-          threadId: "thread-1",
+    try {
+      const memory = await first.getAgent(TODO_AGENT_ID).getMemory()
+      expect(memory).toBeDefined()
+
+      await memory!.saveThread({
+        thread: {
+          id: "thread-1",
           resourceId,
-        }),
-        textMessage({
-          id: "message-2",
-          role: "assistant",
-          text: "Hello Alice",
-          threadId: "thread-1",
+          title: "First thread",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      await memory!.saveMessages({
+        messages: [
+          textMessage({
+            id: "message-1",
+            role: "user",
+            text: "My name is Alice",
+            threadId: "thread-1",
+            resourceId,
+          }),
+          textMessage({
+            id: "message-2",
+            role: "assistant",
+            text: "Hello Alice",
+            threadId: "thread-1",
+            resourceId,
+          }),
+        ],
+      })
+      await memory!.saveThread({
+        thread: {
+          id: "thread-2",
           resourceId,
-        }),
-      ],
-    })
-    await first.memory.saveThread({
-      thread: {
-        id: "thread-2",
-        resourceId,
-        title: "Second thread",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    })
-    await first.memory.saveMessages({
-      messages: [
-        textMessage({
-          id: "message-3",
-          role: "user",
-          text: "Unrelated conversation",
-          threadId: "thread-2",
-          resourceId,
-        }),
-      ],
-    })
+          title: "Second thread",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      await memory!.saveMessages({
+        messages: [
+          textMessage({
+            id: "message-3",
+            role: "user",
+            text: "Unrelated conversation",
+            threadId: "thread-2",
+            resourceId,
+          }),
+        ],
+      })
 
-    const before = await first.memory.recall({
-      threadId: "thread-1",
-      perPage: false,
-    })
+      const before = await memory!.recall({
+        threadId: "thread-1",
+        perPage: false,
+      })
 
-    expect(before.total).toBe(2)
-    await first.memory.settled()
-    await first.close()
+      expect(before.total).toBe(2)
+      await memory!.settled()
+    } finally {
+      await first.shutdown()
+    }
 
-    // A new store instance simulates a process restart against the same file.
-    const second = createAiMemory(path)
-    openMemories.push(second)
+    // A new Mastra instance simulates a process restart against the same file.
+    const second = await createMastra(todoPort)
 
-    const after = await second.memory.recall({
-      threadId: "thread-1",
-      perPage: false,
-    })
+    try {
+      const memory = await second.getAgent(TODO_AGENT_ID).getMemory()
+      expect(memory).toBeDefined()
 
-    expect(after.messages.map((message) => message.role)).toEqual([
-      "user",
-      "assistant",
-    ])
-    expect(after.messages[0]?.content.parts[0]).toMatchObject({
-      type: "text",
-      text: "My name is Alice",
-    })
+      const after = await memory!.recall({
+        threadId: "thread-1",
+        perPage: false,
+      })
 
-    const otherThread = await second.memory.recall({
-      threadId: "thread-2",
-      perPage: false,
-    })
+      expect(after.messages.map((message) => message.role)).toEqual([
+        "user",
+        "assistant",
+      ])
+      expect(after.messages[0]?.content.parts[0]).toMatchObject({
+        type: "text",
+        text: "My name is Alice",
+      })
 
-    expect(otherThread.total).toBe(1)
+      const otherThread = await memory!.recall({
+        threadId: "thread-2",
+        perPage: false,
+      })
+
+      expect(otherThread.total).toBe(1)
+    } finally {
+      await second.shutdown()
+    }
   })
 })
