@@ -60,10 +60,16 @@ Mastra agent memory is stored separately in `data/memory.db`, configurable with
 `MEMORY_DATABASE_PATH` (default `./data/memory.db`). The AI edge creates the
 file and its parent directory on first use, and keeps each AG-UI thread's
 conversation history in Mastra's `mastra_threads` / `mastra_messages` tables.
-Semantic recall stays disabled because the model endpoint does not expose an
-embedding model; only recent messages from the current thread are sent back to
-the model (bounded by a token budget). In Docker, the memory file lives on the
-same `todo-data` volume and is closed during graceful shutdown.
+The Mastra instance owns the single SQLite storage connection. Each agent owns
+its own Memory instance, and Mastra injects the shared storage when the agent
+first resolves it.
+
+Semantic recall, working memory, and observational memory stay disabled. Message
+history is bounded only by `messageHistory.maxTokens = 800_000`, so normal
+conversations are sent in full without summarization; older messages are dropped
+only if that budget is exceeded. This can produce large prompts and increase
+latency and cost as a thread grows. In Docker, the memory file lives on the same
+`todo-data` volume and is closed during graceful shutdown.
 
 ## Todo Agent (AI)
 
@@ -82,7 +88,8 @@ the existing domain service through an in-process `TodoPort`:
 Conversation history is persisted by Mastra Memory in SQLite, so later turns in
 the same AG-UI thread see the earlier messages without the browser resending
 them. The history is scoped to the thread; starting a new thread starts a new
-conversation.
+conversation. The deployment is single-user, so the agent id is also used as the
+stable Memory `resource` id.
 
 The frontend has no tools: it only renders the official collapsible
 `CopilotSidebar`. Because the agent mutates data outside React state, the
