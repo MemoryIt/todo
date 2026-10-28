@@ -17,7 +17,7 @@
     "type-check": "tsc --noEmit",
     "eval": "bun --env-file=../.env run eval/run.ts",
     "eval:type-check": "tsc -p tsconfig.eval.json",
-    "test": "bun test"
+    "test": "bun test --isolate"
   },
   "dependencies": {
     "@ag-ui/client": "1.0.2",
