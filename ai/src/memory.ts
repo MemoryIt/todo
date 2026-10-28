@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
+import { InMemoryStore } from "@mastra/core/storage"
 import { LibSQLStore } from "@mastra/libsql"
 import { Memory } from "@mastra/memory"
 
@@ -45,6 +46,19 @@ export function createMemoryStorage(
 }
 
 /**
+ * Shared Memory behavior for every agent instance.
+ *
+ * Keeping the options in one place ensures the default and standalone
+ * factories cannot drift apart.
+ */
+function createMemoryOptions() {
+  return {
+    semanticRecall: false,
+    messageHistory: { maxTokens: MAX_MESSAGE_HISTORY_TOKENS },
+  }
+}
+
+/**
  * Build the Memory instance owned by one agent.
  *
  * No storage is passed here. When the agent first resolves its memory, Mastra
@@ -58,9 +72,20 @@ export function createMemoryStorage(
  */
 export function createAgentMemory(): Memory {
   return new Memory({
-    options: {
-      semanticRecall: false,
-      messageHistory: { maxTokens: MAX_MESSAGE_HISTORY_TOKENS },
-    },
+    options: createMemoryOptions(),
+  })
+}
+
+/**
+ * Build a standalone Memory instance with process-local storage.
+ *
+ * Unlike {@link createAgentMemory}, this instance does not depend on Mastra to
+ * inject storage. It is intended for in-process callers that create an agent
+ * outside a Mastra composition root, such as the agent evaluation harness.
+ */
+export function createInMemoryAgentMemory(): Memory {
+  return new Memory({
+    storage: new InMemoryStore({ id: "todo-ai-in-memory" }),
+    options: createMemoryOptions(),
   })
 }
