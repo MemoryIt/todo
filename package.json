@@ -22,6 +22,7 @@
 		"lint": "turbo lint",
 		"type-check": "turbo type-check",
 		"test": "turbo test",
+		"eval": "cd ai && bun run eval",
 		"diagrams:check": "bash scripts/diagrams.sh check",
 		"diagrams:render": "bash scripts/diagrams.sh",
 		"postinstall": "turbo build --filter=shared --filter=server --filter=@todo/ai"
