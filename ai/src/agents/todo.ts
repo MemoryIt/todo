@@ -1,4 +1,5 @@
 import { Agent } from "@mastra/core/agent"
+import type { MastraMemory } from "@mastra/core/memory"
 import { createTool } from "@mastra/core/tools"
 import { z } from "zod"
 import { AGENT_IDS } from "shared"
@@ -7,6 +8,19 @@ import { createAgentMemory } from "../memory"
 import { createLlmModel } from "../model"
 
 export const TODO_AGENT_ID = AGENT_IDS.todo
+
+export type TodoAgentMemoryFactory = () => MastraMemory
+
+/**
+ * Optional construction settings for the Todo agent.
+ *
+ * `memory` is omitted for the production default, set to `false` for a
+ * memory-less single-turn agent, or supplied as a factory for a standalone
+ * Memory instance such as `createInMemoryAgentMemory`.
+ */
+export type CreateTodoAgentOptions = {
+  memory?: TodoAgentMemoryFactory | false
+}
 
 const statusSchema = z.enum(["all", "active", "completed"])
 
@@ -127,13 +141,28 @@ const INSTRUCTIONS = [
  *
  * All tools run server-side and delegate to {@link TodoPort}, so the agent never
  * depends on browser state and can work without a connected frontend.
+ *
+ * By default the agent owns a Memory instance whose storage is injected by
+ * Mastra. Callers that run the agent outside a Mastra composition root can
+ * disable Memory for single-turn use or provide a standalone factory such as
+ * `createInMemoryAgentMemory`.
  */
-export function createTodoAgent(todoPort: TodoPort): Agent {
+export function createTodoAgent(
+  todoPort: TodoPort,
+  options: CreateTodoAgentOptions = {},
+): Agent {
+  const memory =
+    options.memory === false
+      ? undefined
+      : options.memory
+        ? options.memory()
+        : createAgentMemory()
+
   return new Agent({
     id: TODO_AGENT_ID,
     name: "Todo Agent",
     model: createLlmModel(),
-    memory: createAgentMemory(),
+    ...(memory ? { memory } : {}),
     tools: createTodoTools(todoPort),
     instructions: INSTRUCTIONS,
   })
